@@ -1,36 +1,44 @@
-typedef struct {
+#include "list.h"
+
+typedef struct Todo_t {
 	char *text;
-	int id;
 	int prio;
+	//struct Todo_t *next;
 } Todo_t;
 
 typedef struct {
 	FILE *file;
-	Todo_t todos[1024];
-	int num_todos;
+	List_t *todos;
 } TodoList_t;
 
 // create todo.txt
 void todo_new_list();
 
-// parse todo.txt
-void todo_parse_file(TodoList_t *tlist);
+//void todo_free(Todo_t *todo);
+void print_todo(void *data, int idx);
 
-Todo_t todo_create(char *text);
+// parse todo.txt
+Todo_t *todo_create(char *text);
+
+void todo_delete(Todo_t *t);
+
+void todolist_create(TodoList_t *tlist);
+
+void todolist_from_file(TodoList_t *tlist);
 
 // add todo
-void todo_add(TodoList_t *tlist, char *text);
+void todolist_add(TodoList_t *tlist, char *text);
 
 // remove a todo
-void todo_finish(TodoList_t *tlist, int line_nums[]);
+void todolist_finish(TodoList_t *tlist, int *linenum);
 
 // save todolist to file
-void todo_save(TodoList_t *tlist);
+void todolist_save(TodoList_t *tlist);
 
 // print contents of todo.txt
-void todo_print(TodoList_t *tlist);
+void todolist_print(TodoList_t *tlist);
 
 // change priority of todo
-void todo_change_priority(TodoList_t *tlist, int line_nums[]);
+void todolist_change_priority(TodoList_t *tlist, int line_nums[]);
 
-void todo_destroy(TodoList_t *tlist);
+void todolist_destroy(TodoList_t *tlist);

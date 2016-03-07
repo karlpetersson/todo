@@ -11,8 +11,8 @@ typedef enum {
 
 typedef struct {
 	command_type_t type;
-	char *data;
+	void *data;
 } Command_t; 
 
-void cmd_new(Command_t *cmd, size_t data_length);
+void cmd_new(Command_t *cmd, size_t data_size, int length);
 void cmd_free(Command_t *cmd);

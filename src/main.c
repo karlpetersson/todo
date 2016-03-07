@@ -19,28 +19,34 @@ int main(int argc, char **argv) {
 	}
 	printf("file opened.\n");
 
+	todolist_create(&tl);
 	tl.file = fp;
-	todo_parse_file(&tl);
+
+	todolist_from_file(&tl);
 	fclose(fp);
 	// parse input cmd
 
 	cmd = parser_command(argc, argv);
 	printf("%s\n", cmd.data);
-
+	
 	switch(cmd.type) {
 		case COMMAND_INVALID:
 			break;
 		case COMMAND_LIST:
-			todo_print(&tl);
+			todolist_print(&tl);
 			break;
 		case COMMAND_ADD:
-			todo_add(&tl, cmd.data);
+			todolist_add(&tl, (char *)cmd.data);
 			break;
 		case COMMAND_FINISH:
+			todolist_finish(&tl, (int *)cmd.data);
+			//strtok(cmd.data, ",");
 			break;
 		case COMMAND_PRIO:
+			//todolist_prio(&tl, cmd.data);
 			break;
 		case COMMAND_LOAD:
+			//todolist_load(&tl, cmd.data);
 			break;
 	}
 
@@ -50,7 +56,7 @@ int main(int argc, char **argv) {
 	}
 	
 	cmd_free(&cmd);
-	todo_save(&tl);
-	todo_destroy(&tl);
-
+	todolist_save(&tl);
+	//todolist_destroy(&tl);
 }
+
