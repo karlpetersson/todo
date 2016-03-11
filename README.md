@@ -27,11 +27,11 @@ todo i
 
 #### during interactive mode
 
-Use `up` and `down` arrow keys to select todo
-press `a` to add a new todo, press `ENTER` when done
-press `d` on a selected todo to finish it
-press `p` to set priority on selected todo
-press `ESC` to exit
+Use `up` and `down` arrow keys to select todo  
+press `a` to add a new todo, press `ENTER` when done  
+press `d` on a selected todo to finish it  
+press `p` to set priority on selected todo  
+press `ESC` to exit  
 
 
 
