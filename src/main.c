@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	todolist_destroy();
+	//todolist_destroy();
 	cmd_free(&cmd);
 }
 
