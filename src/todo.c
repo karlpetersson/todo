@@ -1,7 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
 #include "todo.h"
+
+#define ANSI_COLOR_RED 		"\x1b[31m"
+#define ANSI_COLOR_BG_GRAY 	"\x1b[40m"
+#define ANSI_COLOR_MAGENTA  "\x1b[35m"
+#define ANSI_COLOR_NORMAL 	"\x1b[39m"
+#define ANSI_COLOR_BRIGHT 	"\x1b[37m"
+#define ANSI_COLOR_RESET 	"\x1b[0m"
+#define ANSI_BOLD 			"\x1b[1m"
+#define TODO_PRIO_CHAR 		'@'
+#define TODO_PRIO_STRING 	"@"
+#define TODO_ID_STRING 		ANSI_COLOR_BRIGHT "%d  " ANSI_COLOR_NORMAL
 
 static const int MAX_LINE_LENGTH = 256;
 
@@ -9,25 +22,129 @@ static void todo_free(void *data) {
 	free(((Todo_t *)data)->text);
 }
 
-static void todo_print(void *data, int index) {
+static int todo_compare(void *v1, void *v2) {
+	Todo_t *a = (Todo_t *)v1;
+	Todo_t *b = (Todo_t *)v2;
+	return (a->prio >= b->prio);
+}
+
+static void todo_count(void *data, int index, va_list args) {
 	Todo_t *todo = (Todo_t *)data;
-	printf("(%d) %s", index, todo->text);
+	int *p = va_arg(args, int*);
+	*p = index;
 }
 
-void todolist_create(TodoList_t *t) {
-	t->todos = list_new(sizeof(Todo_t) + (MAX_LINE_LENGTH * sizeof (char)), todo_free);
+static void todo_print(void *data, int index, va_list args) {
+	Todo_t *todo = (Todo_t *)data;
+	char buf[MAX_LINE_LENGTH];
+	MutableConcat_t conc;
+
+	concat_bind(&conc, buf);
+	concat_add(&conc, TODO_ID_STRING, index);
+	if(todo->prio) {
+		concat_add(&conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_RESET);
+	}
+	concat_add(&conc, "%s", todo->text);
+	printf("%s", buf);
 }
 
-void todolist_from_file(TodoList_t *tlist) {
-	char line[MAX_LINE_LENGTH];
-	while (fgets(line, MAX_LINE_LENGTH, tlist->file) != NULL) {
-		todolist_add(tlist, line);
+static void __render_alt(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected) {
+	concat_add(conc, TODO_ID_STRING, linenum);
+
+	if(selected == linenum)
+		concat_add(conc, ANSI_COLOR_BRIGHT);
+
+	if(prio) {
+		if(selected == linenum) {
+			concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_BRIGHT);
+		} else {
+			concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_NORMAL);
+		}
+	}
+
+	concat_add(conc, "%s" ANSI_COLOR_RESET, text);
+}
+
+
+static void __render_default(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected) {
+	if(selected == linenum)
+		concat_add(conc, ANSI_COLOR_BG_GRAY);
+
+	concat_add(conc, TODO_ID_STRING, linenum);
+
+	if(prio)
+		concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_NORMAL);
+
+	concat_add(conc, "%s" ANSI_COLOR_RESET, text);
+}
+
+static void todo_render(void *data, int index, va_list args) {
+	Todo_t 				*todo 		= (Todo_t *)data;
+	MutableConcat_t 	*conc 		= va_arg(args, MutableConcat_t*);
+	int 				*selected 	= va_arg(args, int*);
+	todo_render_fn_t	renderfn 	= va_arg(args, todo_render_fn_t);
+
+	if(renderfn != NULL) {
+		renderfn(conc, todo->text, index, todo->prio, *selected);
+	} else {
+		printf("No render function specified for todo!");
+		//TODO: error handling
 	}
 }
 
-void todolist_add(TodoList_t *tlist, char *text) {
-	Todo_t todo;// = malloc(sizeof (Todo_t));
+static void todo_save(void *data, int index, va_list args) {
+	Todo_t *todo = (Todo_t *)data;
+	char buf[MAX_LINE_LENGTH];
+
+	buf[0] = '\0';
+	if(todo->prio) {
+		snprintf(buf, sizeof buf, TODO_PRIO_STRING);
+	}
+	strcat(buf, todo->text);
+	fputs(buf, va_arg(args, FILE*));
+}
+
+int todolist_length(TodoList_t *tlist) {
+	int count = 0;
+	list_foreach(tlist->todos, todo_count, &count);
+	return count;
+}
+
+void todolist_create(TodoList_t *tlist) {
+	tlist->todos = list_new(sizeof(Todo_t) + (MAX_LINE_LENGTH * sizeof(char)) + sizeof(int), todo_free);
+}
+
+int todolist_from_file(TodoList_t *tlist, const char *path) {
+	int 	priority = 0;
+	char 	line[MAX_LINE_LENGTH];
+	char*	text;
+	FILE*	fp;	
+
+	if(!(fp = fopen(path, "r"))) {
+		printf("WTF");
+		return 0; //TODO: need error codes etc
+	}
+
+	while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
+		text = line;
+		priority = 0;
+		if(line[0] == TODO_PRIO_CHAR ) { //&& isspace(line[1])) {
+			priority = 1;
+			text += 1;
+		}
+		todolist_add(tlist, text, priority);
+	}
+
+	fclose(fp);
+
+	return 1;
+}
+
+//TODO: does this alloc twice? once in list_append...
+void todolist_add(TodoList_t *tlist, char *text, int prio) {
+	Todo_t todo;
 	todo.text = malloc(MAX_LINE_LENGTH * sizeof (char));
+	todo.prio = prio;
 	memset(todo.text, 0, MAX_LINE_LENGTH);
 	strcat(todo.text, text);
 	if(!strchr(todo.text, '\n')) {
@@ -40,146 +157,42 @@ void todolist_finish(TodoList_t *tlist, int *linenum) {
 	list_remove(tlist->todos, *linenum);
 }
 
+void todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio) {
+	Todo_t update;
+	Todo_t *todo = (Todo_t*)list_get(tlist->todos, *linenum);
+
+	todo->prio = *prio;
+
+	list_set(tlist->todos, *linenum, todo);
+	list_sort(tlist->todos, todo_compare);	
+}
+
+void todolist_render(TodoList_t *tlist, char *buf, int selected) {
+	MutableConcat_t concat;
+	concat_bind(&concat, buf);
+	list_foreach(tlist->todos, todo_render, &concat, &selected, __render_alt);
+}
+
 void todolist_print(TodoList_t *tlist) {
 	list_foreach(tlist->todos, todo_print);
+	printf("-----\n");
 }
 
-void todolist_save(TodoList_t *tlist) {
-	ListIterator_t it;
-	for(iter_bind(&it, tlist->todos); !iter_done(&it); iter_next(&it)) {
-		Todo_t *todo = (Todo_t *)iter_value(&it);
-		fputs(todo->text, tlist->file);
-	}
-}
-
-/*
-typedef struct {
-	TodoList_t *list;
-	Todo_t *cur;
-	int index;
-} Iterator_t;
-
-static const int MAX_LINE_LENGTH = 256;
-
-typedef void (*iter_cb_t)(Todo_t *node);
-
-static void iter_bind(Iterator_t *it, TodoList_t *tlist) {
-	it->list = tlist;
-	it->cur = tlist->head->next;
-	it->index = 1;
-}
-
-static void iter_next(Iterator_t *it) {
-	if(it->cur != NULL) {
-		it->cur = it->cur->next;
-		it->index += 1;
-	}
-}
-
-static int iter_done(Iterator_t *it) {
-	return (it->cur == NULL);
-}
-
-static Todo_t *iter_here(Iterator_t *it) {
-	return it->cur;
-}
-
-static int iter_idx(Iterator_t *it) {
-	return it->index;
-}
-
-static void iter_foreach_reverse(Iterator_t *it, iter_cb_t callback) {
-	Todo_t *t;
-	if(!iter_done(it)) {
-		t = iter_here(it);
-		iter_next(it);
-		iter_foreach_reverse(it, callback);
-		callback(t);
-	}
-}
-
-static void iter_foreach(Iterator_t *it, iter_cb_t callback) {
-	while(!iter_done(it)) {
-		callback(iter_here(it));
-		iter_next(it);
-	}
-}
-
-Todo_t *todo_create(char *text) {
-	Todo_t *todo = malloc(sizeof (Todo_t));
-	todo->text = malloc(MAX_LINE_LENGTH * sizeof (char));
-	memset(todo->text, 0, MAX_LINE_LENGTH);
-	strcat(todo->text, text);
-	if(!strchr(todo->text, '\n')) {
-		strcat(todo->text, "\n");
+int todolist_save(TodoList_t *tlist, const char *path) {
+	FILE *fp;
+	if(!(fp = fopen(path, "w"))) {
+		return 0;
 	}
 
-	todo->next = NULL;
+	list_foreach(tlist->todos, todo_save, fp);
 
-	return todo; 
-}
-
-void todo_delete(Todo_t *todo) {
-	free(todo->text);
-	free(todo);
-}
-
-void todolist_create(TodoList_t *tlist) {
-	tlist->head = malloc(sizeof (Todo_t));
-	tlist->head->prio = 2;
-	tlist->head->text = NULL;
-	tlist->head->next = NULL;
-}
-
-void todolist_from_file(TodoList_t *tlist) {
-	char line[MAX_LINE_LENGTH];
-	while (fgets(line, MAX_LINE_LENGTH, tlist->file) != NULL) {
-		todolist_add(tlist, line);
-	}
-}
-
-void todolist_print(TodoList_t *tlist) {
-	Iterator_t it;
-	for(iter_bind(&it, tlist); !iter_done(&it); iter_next(&it)) {
-		printf("(%d) %s", iter_idx(&it), (iter_here(&it))->text);
-	}
-}
-
-void todolist_finish(TodoList_t *tlist, int id) {
-	Iterator_t it;
-	Todo_t *prev = tlist->head;
-	for(iter_bind(&it, tlist); !iter_done(&it); iter_next(&it)) {
-		if(iter_idx(&it) == id) {
-			prev->next = iter_here(&it)->next;
-			todo_delete(iter_here(&it));
-		}
-		prev = iter_here(&it);
-	}
-}
-
-void todolist_add(TodoList_t *tlist, char *text) {
-	Iterator_t it;
-	Todo_t *prev = tlist->head;
-
-	iter_bind(&it, tlist);
-	while(!iter_done(&it)) {
-		prev = iter_here(&it);
-		iter_next(&it);
-	}
-
-	prev->next = todo_create(text);
-}
-
-void todolist_save(TodoList_t *tlist) {
-	Iterator_t it;
-	for(iter_bind(&it, tlist); !iter_done(&it); iter_next(&it)) {
-		fputs(iter_here(&it)->text, tlist->file);
-	}
+	return 1;
 }
 
 void todolist_destroy(TodoList_t *tlist) {
-	Iterator_t it;
-	iter_bind(&it, tlist);
-	iter_foreach_reverse(&it, todo_delete);
-}*/
+	//TODO: call list_free like lolz
+}
 
+void todolist_load(TodoList_t *tlist, char *files) {
+	//TODO: load from source files EPIC
+}

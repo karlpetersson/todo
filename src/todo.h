@@ -1,44 +1,36 @@
+#ifndef TODO_H
+#define TODO_H
+
 #include "list.h"
+#include "concat.h"
+
+typedef void (*todo_render_fn_t)(MutableConcat_t *conc, 
+	const char *text, int linenum, int prio, int selected);
 
 typedef struct Todo_t {
 	char *text;
 	int prio;
-	//struct Todo_t *next;
 } Todo_t;
 
 typedef struct {
 	FILE *file;
 	List_t *todos;
+	//char *ln_symbol;
+	//char *prio_symbol;
+	//int prio_symbol_length;
+	todo_render_fn_t render_fn;
 } TodoList_t;
 
-// create todo.txt
-void todo_new_list();
-
-//void todo_free(Todo_t *todo);
-void print_todo(void *data, int idx);
-
-// parse todo.txt
-Todo_t *todo_create(char *text);
-
-void todo_delete(Todo_t *t);
-
 void todolist_create(TodoList_t *tlist);
-
-void todolist_from_file(TodoList_t *tlist);
-
-// add todo
-void todolist_add(TodoList_t *tlist, char *text);
-
-// remove a todo
+int todolist_from_file(TodoList_t *tlist, const char *path);
+void todolist_add(TodoList_t *tlist, char *text, int prio);
 void todolist_finish(TodoList_t *tlist, int *linenum);
-
-// save todolist to file
-void todolist_save(TodoList_t *tlist);
-
-// print contents of todo.txt
+int todolist_save(TodoList_t *tlist, const char *path);
 void todolist_print(TodoList_t *tlist);
-
-// change priority of todo
-void todolist_change_priority(TodoList_t *tlist, int line_nums[]);
-
+void todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio);
+void todolist_load(TodoList_t *tlist, char *files);
+void todolist_render(TodoList_t *tlist, char *buf, int sel_todo);
+int todolist_length(TodoList_t *tlist);
 void todolist_destroy(TodoList_t *tlist);
+
+#endif
