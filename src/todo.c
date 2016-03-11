@@ -121,7 +121,6 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 	FILE*	fp;	
 
 	if(!(fp = fopen(path, "r"))) {
-		printf("WTF");
 		return 0; //TODO: need error codes etc
 	}
 
