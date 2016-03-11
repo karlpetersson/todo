@@ -1,3 +1,3 @@
-@Here's an important todo
-Here's a less important todo
-Fix this bug
+@Implement loading todos from files with grep
+Fix so todos loaded from source can be edited in vim from interactive mode
+Fix better error handling
