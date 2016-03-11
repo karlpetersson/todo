@@ -1,5 +1,11 @@
-typedef void (*iter_cb_t)(void *data, int index);
+#ifndef LIST_H
+#define LIST_H
+
+#include <stdarg.h>
+
+typedef void (*iter_cb_t)(void *data, int index, va_list args);
 typedef void (*list_free_fn_t)(void *);
+typedef int (*compare_fn_t)(void *v1, void *v2);
 
 typedef struct _Node_t {
 	void *data;
@@ -23,7 +29,10 @@ void list_append(List_t *list, void *element);
 void list_prepend(List_t *list, void *element);
 void list_remove(List_t *list, int idx);
 void list_destroy(List_t *list);
-void list_foreach(List_t *list, iter_cb_t callback);
+void *list_get(List_t *list, int idx);
+void list_foreach(List_t *list, iter_cb_t callback, ...);
+void list_set(List_t *list, int idx, void *data);
+void list_sort(List_t *list, compare_fn_t fn);
 
 //TODO: expose iterator interface or not?
 void iter_bind(ListIterator_t *it, List_t *list);
@@ -31,3 +40,5 @@ void iter_next(ListIterator_t *it);
 int iter_done(ListIterator_t *it);
 int iter_idx(ListIterator_t *it);
 void *iter_value(ListIterator_t *it);
+
+#endif
