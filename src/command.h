@@ -1,3 +1,6 @@
+#ifndef COMMAND_H
+#define COMMAND_H
+
 #include <stdlib.h>
 
 typedef enum {
@@ -6,7 +9,9 @@ typedef enum {
 	COMMAND_ADD,
 	COMMAND_FINISH,
 	COMMAND_PRIO,
-	COMMAND_LOAD
+	COMMAND_LOAD,
+	COMMAND_INTERACTIVE,
+	NUM_COMMANDS
 } command_type_t;
 
 typedef struct {
@@ -16,3 +21,5 @@ typedef struct {
 
 void cmd_new(Command_t *cmd, size_t data_size, int length);
 void cmd_free(Command_t *cmd);
+
+#endif
