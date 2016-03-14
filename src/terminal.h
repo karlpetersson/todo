@@ -1,7 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
-#define TERM_WRITE_MAX_SIZE (1024)
+#define TERM_WRITE_MAX_SIZE (2048)
 #define TERM_READ_MAX_SIZE (1024)
 
 typedef struct {
