@@ -7,6 +7,7 @@
 typedef void (*todo_render_fn_t)(MutableConcat_t *conc, 
 	const char *text, int linenum, int prio, int selected);
 
+//TODO: expand to contain line number etc for source-file todos
 typedef struct Todo_t {
 	char *text;
 	int prio;

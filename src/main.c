@@ -73,6 +73,9 @@ int main(int argc, char **argv) {
 	FILE *fp;
 	TodoList_t tl;
 	Command_t cmd;
+	StrList_t line_list;
+	char *grep_output;
+	int i;
 
 	todolist_create(&tl);
 	tl.file = fp;
@@ -83,7 +86,7 @@ int main(int argc, char **argv) {
 	}
 
 	// parse input cmd
-	cmd = parser_command(argc, argv);
+	cmd = parser_parse_cmd(argc, argv);
 	
 	switch(cmd.type) {
 		case COMMAND_INVALID:
@@ -105,7 +108,19 @@ int main(int argc, char **argv) {
 			todolist_print(&tl);
 			break;
 		case COMMAND_LOAD:
-			//todolist_load(&tl, cmd.data);
+			grep_output = parser_grep_files((char *)cmd.data, "TODO:"); //(char *)cmd.data);
+			strlist_new(&line_list);
+			parser_extract_todos(grep_output, &line_list, "TODO:");
+
+			for(i = 0; i < line_list.num_lines; i++) {
+				if(strlen(line_list.lines[i]) > 1) {
+					todolist_add(&tl, line_list.lines[i], 0);	
+					printf("(Todo added) %s\n", line_list.lines[i]);
+				}
+			}
+
+			free(grep_output);
+			strlist_free(&line_list);
 			break;
 		case COMMAND_INTERACTIVE:
 			interactive_mode(&tl);

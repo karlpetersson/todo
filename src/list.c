@@ -194,7 +194,7 @@ void list_remove(List_t *list, int idx) {
 }
 
 void list_destroy(List_t *list) {
-	//TODO: free all those nodes
+	//TODO: free nodes
 }
 
 

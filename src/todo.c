@@ -12,8 +12,8 @@
 #define ANSI_COLOR_BRIGHT 	"\x1b[37m"
 #define ANSI_COLOR_RESET 	"\x1b[0m"
 #define ANSI_BOLD 			"\x1b[1m"
-#define TODO_PRIO_CHAR 		'@'
-#define TODO_PRIO_STRING 	"@"
+#define TODO_PRIO_CHAR 		'#'
+#define TODO_PRIO_STRING 	"#"
 #define TODO_ID_STRING 		ANSI_COLOR_BRIGHT "%d  " ANSI_COLOR_NORMAL
 
 static const int MAX_LINE_LENGTH = 256;
@@ -51,8 +51,10 @@ static void todo_print(void *data, int index, va_list args) {
 static void __render_alt(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected) {
 	concat_add(conc, TODO_ID_STRING, linenum);
 
-	if(selected == linenum)
+	if(selected == linenum) {
 		concat_add(conc, ANSI_COLOR_BRIGHT);
+		concat_add(conc, ANSI_COLOR_BG_GRAY);		
+	}
 
 	if(prio) {
 		if(selected == linenum) {
@@ -129,7 +131,7 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 		priority = 0;
 		if(line[0] == TODO_PRIO_CHAR ) { //&& isspace(line[1])) {
 			priority = 1;
-			text += 1;
+			text += strlen(TODO_PRIO_STRING);
 		}
 		todolist_add(tlist, text, priority);
 	}
@@ -189,7 +191,7 @@ int todolist_save(TodoList_t *tlist, const char *path) {
 }
 
 void todolist_destroy(TodoList_t *tlist) {
-	//TODO: call list_free like lolz
+	//TODO: call list_free etc
 }
 
 void todolist_load(TodoList_t *tlist, char *files) {
