@@ -5,8 +5,6 @@ Key_t key_from_raw_input(const char* buf) {
 	int p[3] = {*buf, *(buf+1), *(buf+2)};
 	Key_t k;
 
-	//printf("%d %d %d \n", p[0], p[1], p[2]);
-
 	if(p[0] == 27) {
 		if(p[1] == 0 && p[2] == 0) { // esc
 			k = KEY_ESC;
