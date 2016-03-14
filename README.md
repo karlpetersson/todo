@@ -20,6 +20,11 @@ Set priority on a todo (0 or 1):
 todo prio <num> <prio>
 ```
 
+Load from sourcefiles (searches for "TODO:")
+```
+todo l <files>
+```
+
 Interactive mode:
 ```
 todo i
