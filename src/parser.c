@@ -8,6 +8,7 @@
 #define PARSER_ERR "Parser: "
 #define PARSER_ERR_NUM_ARGS "Parser: Too few arguments to command "
 #define PARSER_ERR_NOT_NUM "Parser: Command argument needs to be a number "
+#define PARSER_ERR_EXC_MAX_LENGTH "Parser: Input exceeded max length "
 #define READ_END 0
 #define WRITE_END 1
 #define BASE10 10
@@ -20,10 +21,11 @@ static const int MAX_GREP_INPUT_LENGTH = 65536 + (1024 * 4);
 static const int MAX_GREP_ARG_LENGTH = 256;
 static const int MAX_ERROR_MSG_LENGTH = 512;
 
-static void parser_error(Command_t *cmd, char const *msg) {
+static Command_t parser_error(Command_t *cmd, char const *msg) {
 	cmd_new(cmd, sizeof(char), MAX_ERROR_MSG_LENGTH);
 	cmd->type = COMMAND_INVALID;
 	strncat(cmd->data, msg, MAX_ERROR_MSG_LENGTH);
+	return *cmd;
 }
 
 void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
@@ -143,6 +145,7 @@ char *parser_grep_files(char *files, const char *search_pattern) {
 }
 
 //find correct command, sanitize input
+//TODO: return instead of if-else
 Command_t parser_parse_cmd(int argc, char **argv) {
 	Command_t cmd;
 
@@ -151,79 +154,84 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 		cmd_new(&cmd, 0, 0);
 		cmd.type = COMMAND_LIST;
 		cmd.data = NULL;
-	} else {
+	} 
+	/* ADD */
+	else if(strcmp(argv[1], "add") == 0 || strcmp(argv[1], "a") == 0) {
+		int num_bytes = 0;
 
-		/* ADD */
-		if(strcmp(argv[1], "add") == 0 || strcmp(argv[1], "a") == 0) {
-			if(argc <= 2) {
-				parser_error(&cmd, PARSER_ERR_NUM_ARGS "(add)");
-			} else {
-				cmd_new(&cmd, sizeof(char), MAX_LINE_LENGTH);	
-				cmd.type = COMMAND_ADD;
+		if(argc <= 2) 
+			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(add)");
 		
-				//TODO: handle long strings better
-				for(int i = 2; i < argc; i++) {
-					strncat(cmd.data, argv[i], MAX_LINE_LENGTH);
-					if(i != argc) strncat(cmd.data, " ", MAX_LINE_LENGTH);
-				} 
-			}
-
-		/* DO */
-		} else if(strcmp(argv[1], "do") == 0 || strcmp(argv[1], "d") == 0) {
-			int p;
-			char *end;
-			if(argc <= 2) {
-				parser_error(&cmd, PARSER_ERR_NUM_ARGS "(do)");
-			} else {	
-				p = strtol(argv[2], &end, BASE10);
-
-				if(*end) {
-					parser_error(&cmd, PARSER_ERR_NOT_NUM "(do)");
-				} else {
-					cmd_new(&cmd, sizeof(int), 1);
-					cmd.type = COMMAND_FINISH;
-					memcpy(cmd.data, &p, sizeof(int));
-				}		
-			}
-
-		/* PRIO */
-		} else if(strcmp(argv[1], "prio") == 0 || strcmp(argv[1], "p") == 0) {
-			int p[2];
-			char *end1, *end2;
-
-			if(argc <= 3) {
-				parser_error(&cmd, PARSER_ERR_NUM_ARGS "(prio)");
-			} else {
-				p[0] = strtol(argv[2], &end1, BASE10);
-				p[1] = strtol(argv[3], &end2, BASE10);
-
-				if(*end1 || *end2) {
-					parser_error(&cmd, PARSER_ERR_NOT_NUM "(prio)");
-				} else {
-					cmd_new(&cmd, sizeof(int), 2);
-					cmd.type = COMMAND_PRIO;				
-					memcpy(cmd.data, &p, sizeof(int) * 2);
-				}
-			}
-		/* LOAD */
-		} else if(strcmp(argv[1], "load") == 0 || strcmp(argv[1], "l") == 0) {
-			if(argc < 3) {
-				parser_error(&cmd, PARSER_ERR_NUM_ARGS "(load)");
-			} else {
-				int i;
-				cmd_new(&cmd, sizeof(char), MAX_FILENAME_LENGTH * (argc - 2));
-				cmd.type = COMMAND_LOAD;
-				for(i = 2; i < argc; i++) {
-					strncat(cmd.data, argv[i], MAX_FILENAME_LENGTH);
-					strncat(cmd.data, " ", 1);
-				}
-			}
-		} else if(strcmp(argv[1], "i") == 0) {
-			cmd_new(&cmd, 0, 0);
-			cmd.type = COMMAND_INTERACTIVE;
-		} else {
-			parser_error(&cmd, PARSER_ERR "Unknown command");
+		for(int i = 2; i < argc; i++) {
+			num_bytes += strlen(argv[i]);
 		}
+
+		if(num_bytes >= MAX_LINE_LENGTH - 1)
+			return parser_error(&cmd, PARSER_ERR_EXC_MAX_LENGTH "(add)");
+
+		cmd_new(&cmd, sizeof(char), MAX_LINE_LENGTH);	
+		cmd.type = COMMAND_ADD;
+
+		for(int i = 2; i < argc; i++) {
+			strncat(cmd.data, argv[i], MAX_LINE_LENGTH - 2);
+
+			if(i != (argc - 1)) {
+				strncat(cmd.data, " ", 1);
+			}
+		} 
+
+	/* DO */
+	} else if(strcmp(argv[1], "do") == 0 || strcmp(argv[1], "d") == 0) {
+		int p;
+		char *end;
+
+		if(argc <= 2) 
+			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(do)");
+		
+		p = strtol(argv[2], &end, BASE10);
+
+		if(*end) 
+			return parser_error(&cmd, PARSER_ERR_NOT_NUM "(do)");
+	
+		cmd_new(&cmd, sizeof(int), 1);
+		cmd.type = COMMAND_FINISH;
+		memcpy(cmd.data, &p, sizeof(int));
+
+	/* PRIO */
+	} else if(strcmp(argv[1], "prio") == 0 || strcmp(argv[1], "p") == 0) {
+		int p[2];
+		char *end1, *end2;
+
+		if(argc <= 3)
+			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(prio)");
+		
+		p[0] = strtol(argv[2], &end1, BASE10);
+		p[1] = strtol(argv[3], &end2, BASE10);
+
+		if(*end1 || *end2)
+			return parser_error(&cmd, PARSER_ERR_NOT_NUM "(prio)");
+	
+		cmd_new(&cmd, sizeof(int), 2);
+		cmd.type = COMMAND_PRIO;
+		memcpy(cmd.data, &p, sizeof(int) * 2);
+		
+	/* LOAD */
+	} else if(strcmp(argv[1], "load") == 0 || strcmp(argv[1], "l") == 0) {
+		if(argc < 3)
+			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(load)");
+		
+		cmd_new(&cmd, sizeof(char), MAX_FILENAME_LENGTH * (argc - 2));
+		cmd.type = COMMAND_LOAD;
+		for(int i = 2; i < argc; i++) {
+			strncat(cmd.data, argv[i], MAX_FILENAME_LENGTH);
+			strncat(cmd.data, " ", 1);
+		}
+		
+	} else if(strcmp(argv[1], "i") == 0) {
+		cmd_new(&cmd, 0, 0);
+		cmd.type = COMMAND_INTERACTIVE;
+	} else {
+		parser_error(&cmd, PARSER_ERR "Unknown command");
 	}
 
 	return cmd;

@@ -90,7 +90,7 @@ static void todo_render(void *data, int index, va_list args) {
 	if(renderfn != NULL) {
 		renderfn(conc, todo->text, index, todo->prio, *selected);
 	} else {
-		printf("No render function specified for todo!");
+		printf("No render function specified!");
 		//TODO: error handling
 	}
 }
