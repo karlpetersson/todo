@@ -63,74 +63,47 @@ static void __sort(Node_t **headref, compare_fn_t fn) {
 	*headref = __merge(a, b, fn);
 }
 
-static Node_t *iter_here(ListIterator_t *it) {
-	return it->cur;
-}
-
 void list_sort(List_t *list, compare_fn_t fn) {
 	__sort(&list->head->next, fn);
 }
 
-void iter_bind(ListIterator_t *it, List_t *list) {
-	it->list = list;
-	it->cur = list->head->next;
-	it->index = 1;
-}
-
-void iter_next(ListIterator_t *it) {
-	if(it->cur != NULL) {
-		it->cur = it->cur->next;
-		it->index += 1;
-	}
-}
-
-int iter_done(ListIterator_t *it) {
-	return (it->cur == NULL);
-}
-
-int iter_idx(ListIterator_t *it) {
-	return it->index;
-}
-
-void *iter_value(ListIterator_t *it) {
-	return it->cur->data;
-}
-
-void *list_get(List_t *list, int idx) {
-	ListIterator_t it;
+void *list_get(List_t *list, int get_idx) {
+	Node_t *cur;
+	int idx = 1;
 	void *retval;
 
-	for(iter_bind(&it, list); !iter_done(&it); iter_next(&it)) {
-		if(iter_idx(&it) == idx) {
-			retval = iter_here(&it)->data;
+	list_for_each_idx(cur, list, idx) {
+		if(idx == get_idx) {
+			retval = cur->data;
 			break;
 		}
-	}	
+	}
 
 	return retval;
 }
 
-void list_set(List_t *list, int idx, void *element) {
-	ListIterator_t it;
+void list_set(List_t *list, int set_idx, void *element) {
+	Node_t *cur;
+	int idx = 1;
 
-	for(iter_bind(&it, list); !iter_done(&it); iter_next(&it)) {
-		if(iter_idx(&it) == idx) {
-			iter_here(&it)->data = element;
+	list_for_each_idx(cur, list, idx) {
+		if(idx == set_idx) {
+			cur->data = element;
 			break;
 		}
 	}
 }
 
-void list_foreach(List_t *list, iter_cb_t callback, ...) {
-	ListIterator_t it;
+void list_foreach(List_t *list, list_cb_t callback, ...) {
 	va_list argptr;
+	Node_t *cur;
+	int idx = 1;
 
 	va_start(argptr, callback);
-	iter_bind(&it, list);
-	for(iter_bind(&it, list); !iter_done(&it); iter_next(&it)) {
+	list_for_each_idx(cur, list, idx) {
 		va_list cpy;
 		va_copy(cpy, argptr);
-		callback(iter_here(&it)->data, iter_idx(&it), cpy);
+		callback(cur->data, idx, cpy);
 		va_end(cpy);
 	}
 	va_end(argptr);
@@ -193,9 +166,13 @@ void list_remove(List_t *list, int idx) {
 	}
 }
 
-void list_destroy(List_t *list) {
-	//TODO: free nodes
+void list_free(List_t *list) {
+	Node_t *cur = list->head->next;
+
+	while(cur != NULL) {
+		Node_t *del = cur;
+		cur = cur->next;
+		list->free_fn(del->data);
+		free(del);
+	}
 }
-
-
-//void list_free(List_t *list);
