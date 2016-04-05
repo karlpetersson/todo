@@ -27,6 +27,8 @@ Key_t key_from_raw_input(const char* buf) {
 		k = KEY_D;
 	} else if(p[0] == 112 && p[1] == 0) {
 		k = KEY_P;
+	} else if(p[0] == 113 && p[1] == 0) {
+		k = KEY_Q;
 	} else {
 		k = NUM_KEYS;
 	}

@@ -10,18 +10,21 @@
 #include "keyhandler.h"
 #include "terminal.h"
 
+#define GREP_PATTERN "TODO:"
+
 const char *path = "./todo.txt";
 
 static void interactive_mode(TodoList_t *tlist) {
-	Key_t pressed_key = 0;
-	int cursor_pos = 1;
+	Key_t 	pressed_key = 0;
+	int 	cursor_pos = 1;
+	int 	exit_program = 0;
 
 	if(0 != term_raw_mode()) {
 		printf("raw term fail");
 		exit(EXIT_FAILURE);
 	}
 
-	while(pressed_key != KEY_ESC) {
+	while(!exit_program) {
 		TerminalState_t tstate;
 		term_init(&tstate);
 
@@ -29,7 +32,7 @@ static void interactive_mode(TodoList_t *tlist) {
 
 		term_render(&tstate);
 
-		term_wait_for_key(&tstate);
+		term_get_key_input(&tstate);
 
 		pressed_key = key_from_raw_input(tstate.readbuf);
 
@@ -45,7 +48,7 @@ static void interactive_mode(TodoList_t *tlist) {
 				}
 				break;
 			case KEY_A:
-				term_wait_for_text(&tstate);
+				term_get_text_input(&tstate);
 				todolist_add(tlist, tstate.readbuf, 0);
 				break;
 			case KEY_D:
@@ -57,7 +60,11 @@ static void interactive_mode(TodoList_t *tlist) {
 			case KEY_ENTER:
 				break;
 			case KEY_ESC:
+				exit_program = 1;
 				break; //exit program
+			case KEY_Q: 
+				exit_program = 1;
+				break;
 			default:
 				break;
 		}
@@ -78,7 +85,6 @@ int main(int argc, char **argv) {
 	int i;
 
 	todolist_create(&tl);
-	tl.file = fp;
 
 	if(!todolist_from_file(&tl, path)) {
 		fprintf(stderr, "couldnt open file =(\n");
@@ -97,6 +103,7 @@ int main(int argc, char **argv) {
 			break;
 		case COMMAND_ADD:
 			todolist_add(&tl, (char *)cmd.data, 0);
+			//printf("(Todo added) %s", (char *)cmd.data);
 			todolist_print(&tl);
 			break;
 		case COMMAND_FINISH:
@@ -108,9 +115,9 @@ int main(int argc, char **argv) {
 			todolist_print(&tl);
 			break;
 		case COMMAND_LOAD:
-			grep_output = parser_grep_files((char *)cmd.data, "TODO:"); //(char *)cmd.data);
+			grep_output = parser_grep_files((char *)cmd.data, GREP_PATTERN);
 			strlist_new(&line_list);
-			parser_extract_todos(grep_output, &line_list, "TODO:");
+			parser_extract_todos(grep_output, &line_list, GREP_PATTERN);
 
 			for(i = 0; i < line_list.num_lines; i++) {
 				if(strlen(line_list.lines[i]) > 1) {
@@ -134,7 +141,7 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	//todolist_destroy();
+	todolist_destroy(&tl);
 	cmd_free(&cmd);
 }
 

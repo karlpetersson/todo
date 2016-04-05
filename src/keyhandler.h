@@ -11,6 +11,7 @@ typedef enum {
 	KEY_D,
 	KEY_P,
 	KEY_ESC,
+	KEY_Q,
 	NUM_KEYS
 } Key_t;
 
