@@ -10,12 +10,13 @@
 #define PARSER_ERR_NOT_NUM "Parser: Command argument needs to be a number "
 #define READ_END 0
 #define WRITE_END 1
+#define BASE10 10
 
-static const int BASE10 = 10;
 static const int MAX_LINE_LENGTH = 1024;
-static const int MAX_FILENAME_LENGTH = 1024;
-static const int MAX_GREP_INPUT_LENGTH = 65536 + (1024 * 4);
+static const int MAX_RESULT_LENGTH = 2048;
+static const int MAX_FILENAME_LENGTH = MAX_LINE_LENGTH;
 static const int MAX_GREP_OUTPUT_LENGTH = 65536;
+static const int MAX_GREP_INPUT_LENGTH = 65536 + (1024 * 4);
 static const int MAX_GREP_ARG_LENGTH = 256;
 static const int MAX_ERROR_MSG_LENGTH = 512;
 
@@ -30,7 +31,7 @@ void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 	size_t 			pbytes = strlen(pattern);
 	char 			filename[MAX_LINE_LENGTH] = {'\0'};
 	char 			todotext[MAX_LINE_LENGTH] = {'\0'};
-	char 			result[MAX_LINE_LENGTH * 2] = {'\0'};
+	char 			result[MAX_RESULT_LENGTH] = {'\0'};
 	char 			*res_ptr, *line_pos, *last_slash_pos;
 
 	while(curLine) {
@@ -84,14 +85,13 @@ void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 				*line_pos++;
 			}
 
-			memset(result, 0, MAX_LINE_LENGTH * 2);
+			memset(result, 0, MAX_RESULT_LENGTH);
 
-			//TODO: change all strcat to strncat
-			strcat(result, filename);
-			strcat(result, " ");
-			strcat(result, todotext);
+			strncat(result, filename, MAX_RESULT_LENGTH);
+			strncat(result, " ", MAX_RESULT_LENGTH);
+			strncat(result, todotext, MAX_RESULT_LENGTH);
 
-			strlist_add(sl, result, MAX_LINE_LENGTH * 2);
+			strlist_add(sl, result, MAX_RESULT_LENGTH);
 
 			memset(todotext, 0, MAX_LINE_LENGTH);
 			memset(filename, 0, MAX_LINE_LENGTH);
@@ -207,7 +207,6 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 			}
 		/* LOAD */
 		} else if(strcmp(argv[1], "load") == 0 || strcmp(argv[1], "l") == 0) {
-			//TODO: do with getopt instead, add options
 			if(argc < 3) {
 				parser_error(&cmd, PARSER_ERR_NUM_ARGS "(load)");
 			} else {
@@ -238,9 +237,9 @@ void strlist_new(StrList_t *sl) {
 void strlist_add(StrList_t *sl, char *line, size_t length) {
 	sl->num_lines++;
 	sl->lines = realloc(sl->lines, sl->num_lines * sizeof(char *));
-	sl->lines[sl->num_lines-1] = malloc(length);
-	memset(sl->lines[sl->num_lines-1], 0, length);
-	strcat(sl->lines[sl->num_lines-1], line);
+	sl->lines[sl->num_lines - 1] = malloc(length);
+	memset(sl->lines[sl->num_lines - 1], 0, length);
+	strncat(sl->lines[sl->num_lines - 1], line, length);
 }
 
 void strlist_free(StrList_t *sl) {
