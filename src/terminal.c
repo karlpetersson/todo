@@ -58,24 +58,24 @@ static void clrscr() {
 	system("clear");
 }
 
-void term_init(TerminalState_t *tstate) {
-	memset(tstate->writebuf, 0, TERM_WRITE_MAX_SIZE * sizeof(char));
-	memset(tstate->readbuf, 0, TERM_READ_MAX_SIZE * sizeof(char));
-}	
-
 int term_raw_mode() {
-	return tty_raw(STDIN_FILENO);
+    return tty_raw(STDIN_FILENO);
 }
 
 int term_norm_mode() {
-	return tty_reset(STDIN_FILENO);
+    return tty_reset(STDIN_FILENO);
 }
 
-void term_wait_for_key(TerminalState_t *tstate) {
+void term_init(TerminalState_t *tstate) {
+	memset(tstate->writebuf, 0, TERM_WRITE_MAX_SIZE * sizeof(char));
+	memset(tstate->readbuf, 0, TERM_READ_MAX_SIZE * sizeof(char));
+}
+
+void term_get_key_input(TerminalState_t *tstate) {
 	read(STDIN_FILENO, tstate->readbuf, TERM_READ_MAX_SIZE);
 }
 
-void term_wait_for_text(TerminalState_t *tstate) {
+void term_get_text_input(TerminalState_t *tstate) {
 	term_norm_mode();
 	printf("New todo: ");
 	fgets(tstate->readbuf, TERM_READ_MAX_SIZE, stdin);
