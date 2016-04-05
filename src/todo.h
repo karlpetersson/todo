@@ -32,6 +32,7 @@ void todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio);
 void todolist_load(TodoList_t *tlist, char *files);
 void todolist_render(TodoList_t *tlist, char *buf, int sel_todo);
 int todolist_length(TodoList_t *tlist);
+int todolist_get_priority(TodoList_t *tlist, int *linenum);
 void todolist_destroy(TodoList_t *tlist);
 
 #endif

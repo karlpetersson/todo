@@ -174,10 +174,7 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 
 		for(int i = 2; i < argc; i++) {
 			strncat(cmd.data, argv[i], MAX_LINE_LENGTH - 2);
-
-			if(i != (argc - 1)) {
-				strncat(cmd.data, " ", 1);
-			}
+			if(i != (argc - 1)) strncat(cmd.data, " ", 1);
 		} 
 
 	/* DO */

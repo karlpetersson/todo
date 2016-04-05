@@ -27,6 +27,7 @@ static void interactive_mode(TodoList_t *tlist) {
 	while(!exit_program) {
 		TerminalState_t tstate;
 		term_init(&tstate);
+		int prio;
 
 		todolist_render(tlist, tstate.writebuf, cursor_pos);
 
@@ -55,7 +56,8 @@ static void interactive_mode(TodoList_t *tlist) {
 				todolist_finish(tlist, &cursor_pos);
 				break;
 			case KEY_P:
-				todolist_set_priority(tlist, &cursor_pos, &cursor_pos);
+				prio = !todolist_get_priority(tlist, &cursor_pos);
+				todolist_set_priority(tlist, &cursor_pos, &prio);
 				break;	
 			case KEY_ENTER:
 				break;

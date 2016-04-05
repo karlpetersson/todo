@@ -175,6 +175,11 @@ void todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio) {
 	list_sort(tlist->todos, todo_compare);
 }
 
+int todolist_get_priority(TodoList_t *tlist, int *linenum) {
+	Todo_t *todo = (Todo_t*)list_get(tlist->todos, *linenum);
+	return todo->prio;
+}
+
 // prints todos to buffer using specified render function
 void todolist_render(TodoList_t *tlist, char *buf, int selected) {
 	MutableConcat_t concat;
