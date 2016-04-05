@@ -4,52 +4,13 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include "todo.h"
+#include "styles.h"
 
-#define ANSI_COLOR_RED 		"\x1b[31m"
-#define ANSI_COLOR_BG_GRAY 	"\x1b[40m"
-#define ANSI_COLOR_MAGENTA  "\x1b[35m"
-#define ANSI_COLOR_NORMAL 	"\x1b[39m"
-#define ANSI_COLOR_BRIGHT 	"\x1b[37m"
-#define ANSI_COLOR_RESET 	"\x1b[0m"
-#define ANSI_BOLD 			"\x1b[1m"
-#define TODO_PRIO_CHAR 		'*'
-#define TODO_PRIO_STRING 	"* "
-#define TODO_ID_STRING 		ANSI_COLOR_BRIGHT "%d  " ANSI_COLOR_NORMAL
+//TODO: also defined in styles.c, should be shared
+#define TODO_PRIO_CHAR 			'^'
+#define TODO_PRIO_STRING 		"^ "
 
 static const int MAX_LINE_LENGTH = 256;
-
-static void __render_alt(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected) {
-	concat_add(conc, TODO_ID_STRING, linenum);
-
-	if(selected == linenum) {
-		concat_add(conc, ANSI_COLOR_BRIGHT);
-		concat_add(conc, ANSI_COLOR_BG_GRAY);		
-	}
-
-	if(prio) {
-		if(selected == linenum) {
-			concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_BRIGHT);
-		} else {
-			concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_NORMAL);
-		}
-	}
-
-	concat_add(conc, "%s" ANSI_COLOR_RESET, text);
-}
-
-static void __render_default(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected) {
-	if(selected == linenum) {
-		concat_add(conc, ANSI_COLOR_BG_GRAY);
-	}
-
-	concat_add(conc, TODO_ID_STRING, linenum);
-
-	if(prio) {
-		concat_add(conc, ANSI_COLOR_RED TODO_PRIO_STRING ANSI_COLOR_NORMAL);
-	}
-
-	concat_add(conc, "%s" ANSI_COLOR_RESET, text);
-}
 
 // list free function
 static void todo_free(void *data) {
@@ -76,7 +37,7 @@ static void todo_print(void *data, int index, va_list args) {
 	MutableConcat_t conc;
 
 	concat_bind(&conc, buf);
-	__render_default(&conc, todo->text, index, todo->prio, 0);
+	styles_magenta(&conc, todo->text, index, todo->prio, 0);
 	printf("%s", buf);
 }
 
@@ -91,7 +52,6 @@ static void todo_render(void *data, int index, va_list args) {
 		renderfn(conc, todo->text, index, todo->prio, *selected);
 	} else {
 		printf("No render function specified!");
-		//TODO: error handling
 	}
 }
 
@@ -184,7 +144,7 @@ int todolist_get_priority(TodoList_t *tlist, int *linenum) {
 void todolist_render(TodoList_t *tlist, char *buf, int selected) {
 	MutableConcat_t concat;
 	concat_bind(&concat, buf);
-	list_foreach(tlist->todos, todo_render, &concat, &selected, __render_alt);
+	list_foreach(tlist->todos, todo_render, &concat, &selected, styles_magenta);
 }
 
 void todolist_print(TodoList_t *tlist) {

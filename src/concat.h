@@ -1,6 +1,8 @@
 #ifndef CONCAT_H
 #define CONCAT_H
 
+#include <stdlib.h>
+
 typedef struct {
 	char *cur;
 	char const *end;

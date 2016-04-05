@@ -63,7 +63,7 @@ static void interactive_mode(TodoList_t *tlist) {
 				break;
 			case KEY_ESC:
 				exit_program = 1;
-				break; //exit program
+				break;
 			case KEY_Q: 
 				exit_program = 1;
 				break;

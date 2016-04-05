@@ -1,2 +1,6 @@
-* asdof
-* sfka spdokfa
+^ parser.c:148: return instead of if-else
+^ styles.c:15: add parameters for prio char, how line number should be rendered etc
+^ todo.c:9: also defined in styles.c, should be shared
+todo.c:87: need error codes etc
+todo.c:90: error prone, need to validate file
+todo.c:106: leaks memory mby
