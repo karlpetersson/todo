@@ -8,7 +8,7 @@ OBJ = $(SRC:c=o)
 $(OUT): $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) -o $(OUT) -I$(INC)
 
-all: $(OUT)
+all: $(OUT) -lm
 
 clean: 
 	rm -rf src/*.o todo
