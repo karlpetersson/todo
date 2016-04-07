@@ -35,9 +35,11 @@ static void todo_print(void *data, int index, va_list args) {
 	Todo_t *todo = (Todo_t *)data;
 	char buf[MAX_LINE_LENGTH];
 	MutableConcat_t conc;
+	Style_t	*style = va_arg(args, Style_t*);
 
 	concat_bind(&conc, buf);
-	styles_magenta(&conc, todo->text, index, todo->prio, 0);
+	apply_style(&conc, todo->text, index, todo->prio, 0, style);
+
 	printf("%s", buf);
 }
 
@@ -46,10 +48,10 @@ static void todo_render(void *data, int index, va_list args) {
 	Todo_t 				*todo 		= (Todo_t *)data;
 	MutableConcat_t 	*conc 		= va_arg(args, MutableConcat_t*);
 	int 				*selected 	= va_arg(args, int*);
-	todo_render_fn_t	renderfn 	= va_arg(args, todo_render_fn_t);
+	Style_t				*style 		= va_arg(args, Style_t*);
 
-	if(renderfn != NULL) {
-		renderfn(conc, todo->text, index, todo->prio, *selected);
+	if(style != NULL) {
+		apply_style(conc, todo->text, index, todo->prio, *selected, style);
 	} else {
 		printf("No render function specified!");
 	}
@@ -144,11 +146,12 @@ int todolist_get_priority(TodoList_t *tlist, int *linenum) {
 void todolist_render(TodoList_t *tlist, char *buf, int selected) {
 	MutableConcat_t concat;
 	concat_bind(&concat, buf);
-	list_foreach(tlist->todos, todo_render, &concat, &selected, styles_magenta);
+
+	list_foreach(tlist->todos, todo_render, &concat, &selected, tlist->style);
 }
 
 void todolist_print(TodoList_t *tlist) {
-	list_foreach(tlist->todos, todo_print);
+	list_foreach(tlist->todos, todo_print, tlist->style);
 	printf("-----\n");
 }
 
@@ -162,6 +165,11 @@ int todolist_save(TodoList_t *tlist, const char *path) {
 	list_foreach(tlist->todos, todo_save, fp);
 
 	return 1;
+}
+
+int todolist_load_styles(TodoList_t *tlist, const char *path) {
+	//TODO: if this fails, fall back to default style with err message
+	return styles_from_json(&tlist->style, path);
 }
 
 void todolist_destroy(TodoList_t *tlist) {

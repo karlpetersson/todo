@@ -3,8 +3,15 @@
 
 #include "concat.h"
 
-void styles_magenta(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected);
-void styles_default(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected);
-void styles_alt(MutableConcat_t *conc, const char* text, int linenum, int prio, int selected);
+#define STYLE_LINE_LENGTH (2048)
+
+typedef struct Style_t {
+	char line[STYLE_LINE_LENGTH];
+	char selected[STYLE_LINE_LENGTH];
+	char prioString[65];
+} Style_t;
+
+void apply_style(MutableConcat_t *conc, const char *text, int linenum, int prio, int selected, Style_t *style);
+int styles_from_json(Style_t *style, const char *path);
 
 #endif

@@ -12,7 +12,8 @@
 
 #define GREP_PATTERN "TODO:"
 
-const char *path = "./todo.txt";
+const char *todo_path = "./todo.txt";
+const char *styles_path = "todoStyles.json";
 
 static void interactive_mode(TodoList_t *tlist) {
 	Key_t 	pressed_key = 0;
@@ -88,8 +89,13 @@ int main(int argc, char **argv) {
 
 	todolist_create(&tl);
 
-	if(!todolist_from_file(&tl, path)) {
-		fprintf(stderr, "couldnt open file =(\n");
+	if(!todolist_from_file(&tl, todo_path)) {
+		fprintf(stderr, "Can't open todo.txt\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(!todolist_load_styles(&tl, styles_path)) {
+		fprintf(stderr, "Can't open styles-file (todoStyles.json)\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -138,7 +144,7 @@ int main(int argc, char **argv) {
 			break;
 	}
 	
-	if(!todolist_save(&tl, path)) {
+	if(!todolist_save(&tl, todo_path)) {
 		fprintf(stderr, "sry cant open file\n");
 		exit(EXIT_FAILURE);
 	}

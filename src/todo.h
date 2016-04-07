@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include "concat.h"
+#include "styles.h"
 
 typedef void (*todo_render_fn_t)(MutableConcat_t *conc, 
 	const char *text, int linenum, int prio, int selected);
@@ -16,9 +17,7 @@ typedef struct Todo_t {
 typedef struct {
 	FILE *file;
 	List_t *todos;
-	//char *ln_symbol;
-	//char *prio_symbol;
-	//int prio_symbol_length;
+	Style_t style;
 	todo_render_fn_t render_fn;
 } TodoList_t;
 
@@ -34,5 +33,6 @@ void todolist_render(TodoList_t *tlist, char *buf, int sel_todo);
 int todolist_length(TodoList_t *tlist);
 int todolist_get_priority(TodoList_t *tlist, int *linenum);
 void todolist_destroy(TodoList_t *tlist);
+int todolist_load_styles(TodoList_t *tlist, const char *path);
 
 #endif
