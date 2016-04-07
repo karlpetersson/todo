@@ -145,7 +145,6 @@ char *parser_grep_files(char *files, const char *search_pattern) {
 }
 
 //find correct command, sanitize input
-//TODO: return instead of if-else
 Command_t parser_parse_cmd(int argc, char **argv) {
 	Command_t cmd;
 
