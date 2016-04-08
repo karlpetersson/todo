@@ -90,12 +90,12 @@ int main(int argc, char **argv) {
 	todolist_create(&tl);
 
 	if(!todolist_from_file(&tl, todo_path)) {
-		fprintf(stderr, "Can't open todo.txt\n");
+		fprintf(stderr, "Can't find todo.txt, maybe you don't have one in the current folder?\n");
 		exit(EXIT_FAILURE);
 	}
 
 	if(!todolist_load_styles(&tl, styles_path)) {
-		fprintf(stderr, "Can't open styles-file (todoStyles.json)\n");
+		fprintf(stderr, "Error parsing styles-file (todoStyles.json)\n");
 		exit(EXIT_FAILURE);
 	}
 

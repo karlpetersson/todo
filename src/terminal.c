@@ -75,6 +75,7 @@ void term_get_key_input(TerminalState_t *tstate) {
 	read(STDIN_FILENO, tstate->readbuf, TERM_READ_MAX_SIZE);
 }
 
+//TODO: add support for load in interactive mode, should reload all src-todos?
 void term_get_text_input(TerminalState_t *tstate) {
 	term_norm_mode();
 	printf("New todo: ");

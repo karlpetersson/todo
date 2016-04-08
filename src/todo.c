@@ -6,9 +6,8 @@
 #include "todo.h"
 #include "styles.h"
 
-//TODO: also defined in styles.c, should be shared
-#define TODO_PRIO_CHAR 			'^'
-#define TODO_PRIO_STRING 		"^ "
+#define TODO_PRIO_CHAR 			'*'
+#define TODO_PRIO_STRING 		"* "
 
 static const int MAX_LINE_LENGTH = 256;
 
@@ -24,7 +23,7 @@ static int todo_compare(void *v1, void *v2) {
 	return (a->prio >= b->prio);
 }
 
-// function for counting todos (when used in list_foreach sets p to last index)
+// function for counting todos (when used in list_for_each sets p to last index)
 static void todo_count(void *data, int index, va_list args) {
 	int *p = va_arg(args, int*);
 	*p = index;
@@ -71,7 +70,7 @@ static void todo_save(void *data, int index, va_list args) {
 
 int todolist_length(TodoList_t *tlist) {
 	int count = 0;
-	list_foreach(tlist->todos, todo_count, &count);
+	list_for_each(tlist->todos, todo_count, &count);
 	return count;
 }
 
@@ -147,11 +146,11 @@ void todolist_render(TodoList_t *tlist, char *buf, int selected) {
 	MutableConcat_t concat;
 	concat_bind(&concat, buf);
 
-	list_foreach(tlist->todos, todo_render, &concat, &selected, tlist->style);
+	list_for_each(tlist->todos, todo_render, &concat, &selected, tlist->style);
 }
 
 void todolist_print(TodoList_t *tlist) {
-	list_foreach(tlist->todos, todo_print, tlist->style);
+	list_for_each(tlist->todos, todo_print, tlist->style);
 	printf("-----\n");
 }
 
@@ -162,7 +161,7 @@ int todolist_save(TodoList_t *tlist, const char *path) {
 		return 0;
 	}
 
-	list_foreach(tlist->todos, todo_save, fp);
+	list_for_each(tlist->todos, todo_save, fp);
 
 	return 1;
 }

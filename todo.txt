@@ -1,6 +1,7 @@
-^ parser.c:148: return instead of if-else
-^ styles.c:15: add parameters for prio char, how line number should be rendered etc
-^ todo.c:9: also defined in styles.c, should be shared
-todo.c:87: need error codes etc
-todo.c:90: error prone, need to validate file
-todo.c:106: leaks memory mby
+* styles.c:171: error handling Plz
+* styles.c:185: error handling pLZ
+* todo.c:88: need error codes etc
+todo.c:91: error prone, need to validate file
+todo.c:107: leaks memory mby
+todo.c:170: if this fails, fall back to default style with err message
+todo.h:11: expand to contain line number etc for source-file todos
