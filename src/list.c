@@ -72,7 +72,7 @@ void *list_get(List_t *list, int get_idx) {
 	int idx = 1;
 	void *retval;
 
-	list_for_each_idx(cur, list, idx) {
+	__list_for_each_idx(cur, list, idx) {
 		if(idx == get_idx) {
 			retval = cur->data;
 			break;
@@ -86,7 +86,7 @@ void list_set(List_t *list, int set_idx, void *element) {
 	Node_t *cur;
 	int idx = 1;
 
-	list_for_each_idx(cur, list, idx) {
+	__list_for_each_idx(cur, list, idx) {
 		if(idx == set_idx) {
 			cur->data = element;
 			break;
@@ -94,13 +94,13 @@ void list_set(List_t *list, int set_idx, void *element) {
 	}
 }
 
-void list_foreach(List_t *list, list_cb_t callback, ...) {
+void list_for_each(List_t *list, list_cb_t callback, ...) {
 	va_list argptr;
 	Node_t *cur;
 	int idx = 1;
 
 	va_start(argptr, callback);
-	list_for_each_idx(cur, list, idx) {
+	__list_for_each_idx(cur, list, idx) {
 		va_list cpy;
 		va_copy(cpy, argptr);
 		callback(cur->data, idx, cpy);
