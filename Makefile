@@ -12,3 +12,7 @@ all: $(OUT) -lm
 
 clean: 
 	rm -rf src/*.o todo
+
+install:
+	cp $(OUT) /usr/local/bin
+	cp todoStyles.json ~/
