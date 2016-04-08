@@ -4,24 +4,28 @@
 
 Download the repo, and then `make` followed by `make install` in the root folder. This will install todo in `/usr/local/bin`, and copy `todoStyles.json` to `~/`.
 
+For the best experience, make an alias for "todo". For example: `echo "alias t=todo" >> ~/.zshrc`
+
 ### USAGE
 
-List todos:
+Whenever you run `todo`, the program will use the file named `todo.txt` in the folder you are currently in. So, start by creating a file named `todo.txt` anywhere you want. From there:
+
+List todos
 ```
 todo
 ```
 
-Add a todo:
+Add a todo
 ```
 todo add <text>
 ```
 
-Finish a todo:
+Finish a todo
 ```
 todo do <num>
 ```
 
-Set priority on a todo (0 or 1):
+Set priority on a todo (0 or 1)
 ```
 todo prio <num> <prio>
 ```
@@ -31,7 +35,7 @@ Load from sourcefiles (searches files for "TODO:")
 todo l <files>
 ```
 
-Interactive mode:
+Interactive mode
 ```
 todo i
 ```
