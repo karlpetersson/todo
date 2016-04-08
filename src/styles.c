@@ -82,10 +82,16 @@ static char *__json_str_from_file(const char *filename) {
 	return json_str;
 }
 
-static void __parse_style(char *style_raw, char *result) {
+static int __style_parser_error(const char *msg) {
+	fprintf(stderr, "Style parser error: %s\n", msg);
+	return 0;
+}
+
+static int __parse_style(char *style_raw, char *result) {
 	char *ptr = NULL;
 	char cToStr[2];
-	int num;
+	int found[3] = {0,0,0};
+	int num, fcnt = 0;
 
 	cToStr[1] = '\0';
 
@@ -97,25 +103,37 @@ static void __parse_style(char *style_raw, char *result) {
 		if(*ptr == '$' && *(ptr + 1) == '(') {
 			ptr += 2; //skip '$' and '('
 
-			if(*ptr == 'c') {
+			if(*ptr == 'c' || *ptr == 'C') {
 				num = *(++ptr) - '0';
+				if(num < 0 || num > 8)
+					return __style_parser_error("Num for text color out of bounds (0-7 allowed)");
 				strcat(result, co_table[num]);
-			} else if(*ptr == 'b') {
+			} else if(*ptr == 'b' || *ptr == 'B') {
 				num = *(++ptr) - '0';
+				if(num < 0 || num > 8)
+					return __style_parser_error("Num for background color out of bounds (0-7 allowed)");
 				strcat(result, bg_table[num]);
-			} else if(*ptr == 's') {
+			} else if(*ptr == 's' || *ptr == 'S') {
 				num = *(++ptr) - '0';
+				if(num < 0 || num > 8)
+					return __style_parser_error("Num for special out of bounds (0-2 allowed)");
 				strcat(result, st_table[num]);
-			} else if(*ptr == 'R') {
+			} else if(*ptr == 'r' || *ptr == 'R') {
 				strcat(result, ST_RESET);
-			} else if(*ptr == 'N') {
+			} else if(*ptr == 'n' || *ptr == 'N') {
+				if(fcnt > 2) return __style_parser_error("Style contains more than one of each $(N) $(P) and $(T)");
+				found[fcnt++] = 'N';
 				strcat(result, "%d");
-			} else if(*ptr == 'P') {
+			} else if(*ptr == 'p' || *ptr == 'P') {
+				if(fcnt > 2) return __style_parser_error("Style contains more than one of each $(N) $(P) and $(T)");
+				found[fcnt++] = 'P';
 				strcat(result, "%s");
-			} else if(*ptr == 'T') {
+			} else if(*ptr == 't' || *ptr == 'T') {
+				if(fcnt > 2) return __style_parser_error("Style contains more than one of each $(N) $(P) and $(T)");
+				found[fcnt++] = 'T';
 				strcat(result, "%s");
 			} else {
-				printf("Style parser error: unknown variable: %c \n", *ptr);
+				printf("Unknown variable: %c \n", *ptr);
 			}
 
 			ptr += 2; // skip var and ')'
@@ -124,6 +142,15 @@ static void __parse_style(char *style_raw, char *result) {
 			strcat(result, cToStr);
 		}
 	}
+
+	if(fcnt < 3)
+		return __style_parser_error("One of the variables $(N) $(P) $(T) is missing");
+
+	if(!(found[0] == 'N' && found[1] == 'P' && found[2] == 'T'))
+		return __style_parser_error("Variables for line number, priority and text is in wrong order (correct order is: $(N) $(P) $(T))");
+
+	return 1;
+
 }
 
 void apply_style(MutableConcat_t *conc, const char *text, int linenum, int prio, int selected, Style_t *style) {
@@ -140,7 +167,11 @@ int styles_from_json(Style_t *style, const char *path) {
 	const char *active_style_id;
 	char *json_str = __json_str_from_file(path);
 
-	if(!json_str) return 0;
+	if(!json_str) {
+		//TODO: error handling Plz
+		fprintf(stderr, "Cannot open file %s\n", path);
+		return 0;
+	}
 
 	char style_str[STYLE_LINE_LENGTH] = {0};
 	char style_str_sel[STYLE_LINE_LENGTH] = {0};	
@@ -149,7 +180,12 @@ int styles_from_json(Style_t *style, const char *path) {
 	root = cJSON_Parse(json_str);
 	active_style_id = cJSON_GetObjectItem(root, "activeStyle")->valuestring;
 	styles = cJSON_GetObjectItem(root, "styles");
-	active_style = cJSON_GetObjectItem(styles, active_style_id);
+	
+	if((active_style = cJSON_GetObjectItem(styles, active_style_id)) == NULL) {
+		//TODO: error handling pLZ
+		fprintf(stderr, "The active style is set to '%s', but it is not defined in the styles-file\n", active_style_id);
+		return 0;
+	} 
 
 	style->line[0] = '\0';
 	style->selected[0] = '\0';
@@ -159,8 +195,14 @@ int styles_from_json(Style_t *style, const char *path) {
 	strncat(style_str_sel, cJSON_GetObjectItem(active_style, "selected")->valuestring, 1024);
 	strncat(style->prioString, cJSON_GetObjectItem(active_style, "prioString")->valuestring, 64);
 
-	__parse_style(style_str, style->line);
-	__parse_style(style_str_sel, style->selected);
+	if(!__parse_style(style_str, style->line)) {
+		fprintf(stderr, "Error in style '%s' attribute 'line'\n", active_style_id);
+		return 0;
+	}
+	if(!__parse_style(style_str_sel, style->selected)) {
+		fprintf(stderr, "Error in style '%s' attribute 'selected'\n", active_style_id);
+		return 0;
+	}
 
 	cJSON_Delete(root);
 
