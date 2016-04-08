@@ -1,5 +1,5 @@
 {
-	"activeStyle": "blue",
+	"activeStyle": "magenta",
 	"styles": {
 		"clean": {
 			"line": "$(C7)$(N)  $(R)$(C1)$(P)$(R)$(T)",
@@ -9,7 +9,7 @@
 		"magenta": {
 			"line": "$(C7)$(N)  $(R)$(C5)$(P)$(R)$(T)",
 			"selected": "$(b5)$(C7)$(N)  $(R)$(b5)$(C7)$(P)$(R)$(b5)$(C7)$(T)",
-			"prioString": "^ "
+			"prioString": "@"
 		},
 		"blue": {
 			"line": "$(b4)$(C7)$(N) $(R) $(C4)$(P)$(R)$(T)",

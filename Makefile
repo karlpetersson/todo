@@ -15,4 +15,4 @@ clean:
 
 install:
 	cp $(OUT) /usr/local/bin
-	cp todoStyles.json ~/
+	cp todoStyles.json /usr/local/etc

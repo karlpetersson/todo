@@ -13,7 +13,7 @@
 #define GREP_PATTERN "TODO:"
 
 const char *todo_path = "./todo.txt";
-const char *styles_path = "todoStyles.json";
+const char *styles_path = "/usr/local/etc/todoStyles.json";
 
 static void interactive_mode(TodoList_t *tlist) {
 	Key_t 	pressed_key = 0;
