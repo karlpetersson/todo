@@ -1,29 +1,29 @@
 {
-	"activeStyle": "red",
+	"activeStyle": "blue",
 	"styles": {
 		"clean": {
-			"line": "$(c7)$(N)  $(R)$(c1)$(P)$(R)$(T)",
-			"selected": "$(c7)$(N)  $(R)$(c1)$(P)$(R)$(c7)$(T)",
+			"line": "$(C7)$(N)  $(R)$(C1)$(P)$(R)$(T)",
+			"selected": "$(C7)$(N)  $(R)$(C1)$(P)$(R)$(C7)$(T)",
 			"prioString": "*"
 		},
 		"magenta": {
-			"line": "$(c7)$(N)  $(R)$(c5)$(P)$(R)$(T)",
-			"selected": "$(b5)$(c7)$(N)  $(R)$(b5)$(c7)$(P)$(R)$(b5)$(c7)$(T)",
+			"line": "$(C7)$(N)  $(R)$(C5)$(P)$(R)$(T)",
+			"selected": "$(b5)$(C7)$(N)  $(R)$(b5)$(C7)$(P)$(R)$(b5)$(C7)$(T)",
 			"prioString": "^ "
 		},
 		"blue": {
-			"line": "$(b4)$(c7)$(N) $(R) $(c4)$(P)$(R)$(T)",
-			"selected": "$(b7)$(c4)$(N)  $(R) $(c4)$(P)$(R)$(c4)$(T)",
+			"line": "$(b4)$(C7)$(N) $(R) $(C4)$(P)$(R)$(T)",
+			"selected": "$(b7)$(C4)$(N)  $(R) $(C4)$(P)$(R)$(C4)$(T)",
 			"prioString": "@"
 		},
 		"red": {
-			"line": "$(c1)$(N)   $(R)$(c1)$(P)$(R)$(T)",
-			"selected": "$(c1)$(N) ->$(R)$(b1)$(c7)$(P)$(R)$(c7)$(T)",
+			"line": "$(C1)$(N)   $(R)$(C1)$(P)$(R)$(T)",
+			"selected": "$(C1)$(N) ->$(R)$(b1)$(C7)$(P)$(R)$(C7)$(T)",
 			"prioString": "@"
 		},
 		"lol": {
-			"line": "$(c3)($(c7)$(N)$(c3))  $(R)$(c1)$(P)$(R)$(c2)$(T)",
-			"selected": "$(c3)($(c7)$(N)$(c3)) $(c6)[$(R)$(s1)$(c1)$(P)$(R)$(s1)$(c6)$(T)",
+			"line": "$(C3)($(C7)$(N)$(C3))  $(R)$(C1)$(P)$(R)$(C2)$(T)",
+			"selected": "$(C3)($(C7)$(N)$(C3)) $(C6)[$(R)$(s1)$(C1)$(P)$(R)$(s1)$(C6)$(T)",
 			"prioString": "!!"
 		}
 	}
