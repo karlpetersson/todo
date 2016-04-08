@@ -46,7 +46,7 @@ Use `up` and `down` arrow keys to select todo
 press `a` to add a new todo, press `ENTER` when done  
 press `d` on a selected todo to finish it  
 press `p` to toggle priority on selected todo  
-press `ESC` to exit  
+press `q` or `ESC` to exit  
 
 ### Custom text-styles
 Styles define how the todos are rendered to the console, both in normal and interactive mode, and are defined in `todoStyles.json`. The active style is defined by the attribute "activeStyle", and can be set by using the keys in the "styles"-array.

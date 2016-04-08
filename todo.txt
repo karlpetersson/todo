@@ -1,6 +1,7 @@
-* styles.c:171: error handling Plz
-* styles.c:185: error handling pLZ
+* Add images to README-file
 * todo.c:88: need error codes etc
+styles.c:185: error handling pLZ
+styles.c:171: error handling Plz
 todo.c:91: error prone, need to validate file
 todo.c:107: leaks memory mby
 todo.c:170: if this fails, fall back to default style with err message
