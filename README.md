@@ -2,7 +2,7 @@
 
 ### INSTALLATION
 
-Download the repo, and then `make` followed by `make install` in the root folder. This will install todo in `/usr/local/bin`, and copy `todoStyles.json` to `~/`.
+Download the repo, and then `make` followed by `make install` in the root folder. This will install todo in `/usr/local/bin`, and copy `todoStyles.json` to `/usr/local/etc`.
 
 For the best experience, make an alias for "todo". For example: `echo "alias t=todo" >> ~/.zshrc`
 
