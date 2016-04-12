@@ -58,37 +58,27 @@ static void clrscr() {
 	system("clear");
 }
 
-int term_raw_mode() {
-    return tty_raw(STDIN_FILENO);
-}
+void term_get_key_input(char *result, size_t size) {
+    if(0 != tty_raw(STDIN_FILENO)) {
+        printf("raw term fail");
+        exit(EXIT_FAILURE);
+    }
 
-int term_norm_mode() {
-    return tty_reset(STDIN_FILENO);
-}
-
-void term_init(TerminalState_t *tstate) {
-	memset(tstate->writebuf, 0, TERM_WRITE_MAX_SIZE * sizeof(char));
-	memset(tstate->readbuf, 0, TERM_READ_MAX_SIZE * sizeof(char));
-}
-
-void term_get_key_input(TerminalState_t *tstate) {
-	read(STDIN_FILENO, tstate->readbuf, TERM_READ_MAX_SIZE);
+	read(STDIN_FILENO, result, size);
+    
+    if(0 != tty_reset(STDIN_FILENO)) {
+        printf("reset term fail");
+        exit(EXIT_FAILURE);
+    }
 }
 
 //TODO: add support for load in interactive mode, should reload all src-todos?
-void term_get_text_input(TerminalState_t *tstate) {
-	term_norm_mode();
+void term_get_text_input(char *buf, size_t size) {
 	printf("New todo: ");
-	fgets(tstate->readbuf, TERM_READ_MAX_SIZE, stdin);
-	term_raw_mode();
+	fgets(buf, size, stdin);
 }
 
-void term_render(TerminalState_t *tstate) {
-	tty_reset(STDIN_FILENO);
-
-	clrscr();
-
-	write(STDOUT_FILENO, tstate->writebuf, TERM_WRITE_MAX_SIZE);
-
-	tty_raw(STDIN_FILENO);
+void term_render(char *buf, size_t size) {
+	clrscr();    
+	write(STDOUT_FILENO, buf, size);
 }

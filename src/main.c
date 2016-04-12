@@ -9,8 +9,11 @@
 #include "parser.h"
 #include "keyhandler.h"
 #include "terminal.h"
+#include "concat.h"
 
 #define GREP_PATTERN "TODO:"
+#define INPUT_TEXT_SIZE (1024)
+#define INPUT_KEY_SIZE (64)
 
 const char *todo_path = "./todo.txt";
 const char *styles_path = "/usr/local/etc/todoStyles.json";
@@ -19,24 +22,23 @@ static void interactive_mode(TodoList_t *tlist) {
 	Key_t 	pressed_key = 0;
 	int 	cursor_pos = 1;
 	int 	exit_program = 0;
-
-	if(0 != term_raw_mode()) {
-		printf("raw term fail");
-		exit(EXIT_FAILURE);
-	}
+	cbuf_t *render_buf = cbuf_new(1024);
 
 	while(!exit_program) {
-		TerminalState_t tstate;
-		term_init(&tstate);
+		char input_text_buf[INPUT_TEXT_SIZE];
+		char input_key_buf[INPUT_KEY_SIZE];
 		int prio;
 
-		todolist_render(tlist, tstate.writebuf, cursor_pos);
+		memset(input_key_buf, 0, INPUT_KEY_SIZE);
+		memset(input_text_buf, 0, INPUT_TEXT_SIZE);
+		
+		todolist_render(tlist, render_buf, cursor_pos);
 
-		term_render(&tstate);
+		term_render(cbuf_get(render_buf), render_buf->size);
 
-		term_get_key_input(&tstate);
-
-		pressed_key = key_from_raw_input(tstate.readbuf);
+		term_get_key_input(input_key_buf, INPUT_KEY_SIZE);
+		
+		pressed_key = key_from_raw_input(input_key_buf);
 
 		switch(pressed_key) {
 			case KEY_UP:
@@ -50,11 +52,13 @@ static void interactive_mode(TodoList_t *tlist) {
 				}
 				break;
 			case KEY_A:
-				term_get_text_input(&tstate);
-				todolist_add(tlist, tstate.readbuf, 0);
+				term_get_text_input(input_text_buf, INPUT_TEXT_SIZE);
+				todolist_add(tlist, input_text_buf, 0);
 				break;
 			case KEY_D:
-				todolist_finish(tlist, &cursor_pos);
+				if(cursor_pos)
+					todolist_finish(tlist, &cursor_pos);
+				if(cursor_pos > todolist_length(tlist)) cursor_pos--;
 				break;
 			case KEY_P:
 				prio = !todolist_get_priority(tlist, &cursor_pos);
@@ -71,12 +75,10 @@ static void interactive_mode(TodoList_t *tlist) {
 			default:
 				break;
 		}
+		cbuf_clear(render_buf);
 	}
 
-	if(0 != term_norm_mode()) {
-		printf("fail reset term mode");
-		exit(EXIT_FAILURE);
-	}
+	cbuf_free(render_buf);
 }
 
 int main(int argc, char **argv) {
