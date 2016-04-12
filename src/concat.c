@@ -3,15 +3,16 @@
 #include <stdio.h>
 #include "concat.h"
 
+
 void concat_bind(MutableConcat_t *c, char *buf) {
 	c->cur = buf;
 	c->end = buf + sizeof buf;
 }
 
-void concat_add(MutableConcat_t *c, char const* str, ...) {
+void concat_add(MutableConcat_t *c, size_t size, char const* str, ...) {
 	va_list argp;
 	va_start(argp, str);
-	c->cur += vsprintf(c->cur, str, argp);
+	c->cur += vsnprintf(c->cur, size, str, argp);
 	va_end(argp);
 }
 

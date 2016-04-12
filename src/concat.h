@@ -6,6 +6,7 @@
 typedef struct {
 	char *cur;
 	char const *end;
+	size_t buf_size;
 } MutableConcat_t;
 
 typedef struct {
@@ -15,7 +16,7 @@ typedef struct {
 } ImmutableConcat_t;
 
 void concat_bind(MutableConcat_t *c, char *buf);
-void concat_add(MutableConcat_t *c, char const* str, ...);
+void concat_add(MutableConcat_t *c,  size_t size, char const* str, ...);
 
 void immConcat_bind(ImmutableConcat_t *c, size_t size);
 void immConcat_add(ImmutableConcat_t *c, char const* str, ...);
