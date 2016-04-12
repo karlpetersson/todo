@@ -2,6 +2,7 @@
 #define STYLES_H
 
 #include "concat.h"
+#include "cbuf.h"
 
 #define STYLE_LINE_LENGTH (2048)
 
@@ -11,7 +12,7 @@ typedef struct Style_t {
 	char prioString[65];
 } Style_t;
 
-void apply_style(MutableConcat_t *conc, const char *text, int linenum, int prio, int selected, Style_t *style);
+void apply_style(cbuf_t *result, const char *text, int linenum, int prio, int selected, Style_t *style);
 int styles_from_json(Style_t *style, const char *path);
 
 #endif

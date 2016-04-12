@@ -3,13 +3,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
+
 #include "todo.h"
 #include "styles.h"
 
 #define TODO_PRIO_CHAR 			'*'
 #define TODO_PRIO_STRING 		"* "
 
-static const int MAX_LINE_LENGTH = 256;
+static const int MAX_TODO_LENGTH = 1024;
 
 // list free function
 static void todo_free(void *data) {
@@ -29,28 +30,16 @@ static void todo_count(void *data, int index, va_list args) {
 	*p = index;
 }
 
-// function for printing a todo to stdout
-static void todo_print(void *data, int index, va_list args) {
-	Todo_t *todo = (Todo_t *)data;
-	char buf[MAX_LINE_LENGTH];
-	MutableConcat_t conc;
-	Style_t	*style = va_arg(args, Style_t*);
-
-	concat_bind(&conc, buf);
-	apply_style(&conc, todo->text, index, todo->prio, 0, style);
-
-	printf("%s", buf);
-}
-
 // function for rendering todo to a buffer
 static void todo_render(void *data, int index, va_list args) {
-	Todo_t 				*todo 		= (Todo_t *)data;
-	MutableConcat_t 	*conc 		= va_arg(args, MutableConcat_t*);
-	int 				*selected 	= va_arg(args, int*);
-	Style_t				*style 		= va_arg(args, Style_t*);
+	Todo_t				*todo		= (Todo_t *)data;
+	//MutableConcat_t		*conc 		= va_arg(args, MutableConcat_t*);
+	cbuf_t *			result		= va_arg(args, cbuf_t*);
+	int					*selected	= va_arg(args, int*);
+	Style_t*			style		= va_arg(args, Style_t*);
 
 	if(style != NULL) {
-		apply_style(conc, todo->text, index, todo->prio, *selected, style);
+		apply_style(result, todo->text, index, todo->prio, *selected, style);
 	} else {
 		printf("No render function specified!");
 	}
@@ -58,29 +47,31 @@ static void todo_render(void *data, int index, va_list args) {
 
 static void todo_save(void *data, int index, va_list args) {
 	Todo_t *todo = (Todo_t *)data;
-	char buf[MAX_LINE_LENGTH];
+	char buf[MAX_TODO_LENGTH];
 
 	buf[0] = '\0';
 	if(todo->prio) {
 		snprintf(buf, sizeof buf, TODO_PRIO_STRING);
 	}
-	strncat(buf, todo->text, MAX_LINE_LENGTH);
+	strncat(buf, todo->text, MAX_TODO_LENGTH);
 	fputs(buf, va_arg(args, FILE*));
 }
 
 int todolist_length(TodoList_t *tlist) {
 	int count = 0;
+
 	list_for_each(tlist->todos, todo_count, &count);
+	
 	return count;
 }
 
 void todolist_create(TodoList_t *tlist) {
-	tlist->todos = list_new(sizeof(Todo_t) + (MAX_LINE_LENGTH * sizeof(char)) + sizeof(int), todo_free);
+	tlist->todos = list_new(sizeof(Todo_t) + (MAX_TODO_LENGTH * sizeof(char)) + sizeof(int), todo_free);
 }
 
 int todolist_from_file(TodoList_t *tlist, const char *path) {
 	int 	priority = 0;
-	char 	line[MAX_LINE_LENGTH];
+	char 	line[MAX_TODO_LENGTH];
 	char*	text;
 	FILE*	fp;	
 
@@ -89,7 +80,7 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 	}
 
 	//TODO: error prone, need to validate file
-	while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
+	while (fgets(line, MAX_TODO_LENGTH, fp) != NULL) {
 		text = line;
 		priority = 0;
 		if(line[0] == TODO_PRIO_CHAR ) { //&& isspace(line[1])) {
@@ -108,21 +99,26 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 void todolist_add(TodoList_t *tlist, char *text, int prio) {
 	Todo_t todo;
 
-	todo.text = malloc(MAX_LINE_LENGTH * sizeof (char));
+	todo.text = malloc(MAX_TODO_LENGTH * sizeof (char));
 	todo.prio = prio;
 
-	memset(todo.text, 0, MAX_LINE_LENGTH);
-	strncat(todo.text, text, MAX_LINE_LENGTH);
+	memset(todo.text, 0, MAX_TODO_LENGTH);
+	strncat(todo.text, text, MAX_TODO_LENGTH);
 	
 	if(!strchr(todo.text, '\n')) {
-		strncat(todo.text, "\n", MAX_LINE_LENGTH);
+		strncat(todo.text, "\n", MAX_TODO_LENGTH);
 	}
 
 	list_append(tlist->todos, &todo);
 }
 
 void todolist_finish(TodoList_t *tlist, int *linenum) {
-	list_remove(tlist->todos, *linenum);
+	int len = todolist_length(tlist);
+
+	//TODO: err message to user? t 
+	if(*linenum <= len && *linenum > 0) {
+		list_remove(tlist->todos, *linenum);
+	}
 }
 
 // sets priority of todo and sorts the list based on priority
@@ -141,17 +137,21 @@ int todolist_get_priority(TodoList_t *tlist, int *linenum) {
 	return todo->prio;
 }
 
-// prints todos to buffer using specified render function
-void todolist_render(TodoList_t *tlist, char *buf, int selected) {
-	MutableConcat_t concat;
-	concat_bind(&concat, buf);
-
-	list_for_each(tlist->todos, todo_render, &concat, &selected, tlist->style);
+void todolist_render(TodoList_t *tlist, cbuf_t *cbuf, int selected) {
+	list_for_each(tlist->todos, todo_render, cbuf, &selected, tlist->style);
 }
 
+// prints todos to stdout
 void todolist_print(TodoList_t *tlist) {
-	list_for_each(tlist->todos, todo_print, tlist->style);
+	cbuf_t *cbuf = cbuf_new(MAX_TODO_LENGTH);
+	int selected = 0;
+	
+	list_for_each(tlist->todos, todo_render, cbuf, &selected, tlist->style);
+
+	printf("%s", cbuf_get(cbuf));
 	printf("-----\n");
+
+	cbuf_free(cbuf);
 }
 
 // prints each todo in todolist to specified file

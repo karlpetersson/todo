@@ -153,14 +153,20 @@ static int __parse_style(char *style_raw, char *result) {
 
 }
 
-void apply_style(MutableConcat_t *conc, const char *text, int linenum, int prio, int selected, Style_t *style) {
-
+void apply_style(cbuf_t *result, const char *text, int linenum, int prio, int selected, Style_t *style) {
 	char line[STYLE_LINE_LENGTH];
 
 	sprintf(line, ((selected == linenum) ? style->selected : style->line),
 		linenum, (prio ? style->prioString : ""), text); 
-		
-	concat_add(conc, "%s" ST_RESET, line);
+	
+	cbuf_puts(result, line, strlen(line));
+
+	//strncat(result, line, STYLE_LINE_LENGTH);
+	//strncat(result, ST_RESET, 8);
+
+	//printf("LEN: %lu  ", strlen(line));
+
+	//concat_add(conc, STYLE_LINE_LENGTH, "%s" ST_RESET, line);
 }
 
 int styles_from_json(Style_t *style, const char *path) {
