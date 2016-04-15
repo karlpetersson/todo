@@ -4,11 +4,14 @@
 
 Download the repo, and then `make` followed by `make install` in the root folder. This will install todo in `/usr/local/bin`, and copy `todoStyles.json` to `/usr/local/etc`.
 
-For the best experience, make an alias for "todo". For example: `echo "alias t=todo" >> ~/.zshrc`
-
 ### USAGE
 
-Whenever you run `todo`, the program will use the file named `todo.txt` in the folder you are currently in. So, start by creating a file named `todo.txt` anywhere you want. From there:
+Whenever you run `todo`, the program will locate the closest file named `todo.txt` starting in the current directory and going up. `todo init` will create this file for you in the directory you're currently in. The commands available are listed below (each command has a shortcut which is the first letter, i.e. `todo finish` is equivalent to `todo f`)
+
+Create todo.txt in current directory
+```
+todo init
+```
 
 List todos
 ```
@@ -22,17 +25,17 @@ todo add <text>
 
 Finish a todo
 ```
-todo do <num>
+todo finish <num>
 ```
 
-Set priority on a todo (0 or 1)
+Toggle priority on a todo
 ```
-todo prio <num> <prio>
+todo prio <num>
 ```
 
 Load from sourcefiles (searches files for "TODO:")
 ```
-todo l <files>
+todo load <files>
 ```
 
 Interactive mode
@@ -44,7 +47,7 @@ todo i
 
 Use `up` and `down` arrow keys to select todo  
 press `a` to add a new todo, press `ENTER` when done  
-press `d` on a selected todo to finish it  
+press `f` on a selected todo to finish it  
 press `p` to toggle priority on selected todo  
 press `q` or `ESC` to exit  
 
@@ -71,7 +74,7 @@ Extras color can be added with the `$(sX)` variable, where `X` is a number betwe
 Use the variable `$(R)` to reset styles (color, background etc). Needed if for instance you want the line number to be in a different color.
 
 ##### Example
-`$(C7)$(N)  $(R)$(C5)$(P)$(R)$(T)` will render todos with the line number $(N) in white (C7), then reset the colors with $(R), render the priority character $(R) in magenta (C5), reset again, and then render the todo-text with $(T).
+`$(C7)$(N)  $(R)$(C5)$(P)$(R)$(T)` will render todos with the line number $(N) in white (C7), render two spaces, reset the colors with $(R), render the priority character $(R) in magenta (C5), reset again, and then render the todo-text with $(T).
 
 ##### Available text colors and background colors
 0 = Black  

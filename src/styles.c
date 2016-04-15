@@ -123,13 +123,12 @@ void styles_apply(cbuf_t *result, const char *text, int linenum, int prio, int s
 	cbuf_puts(result, line, strlen(line));
 }
 
-styles_error_t *styles_from_json(Style_t *style, const char *path) {
+int styles_from_json(Style_t *style, const char *path) {
 	const char *active_style_id;
 	char *json_str = __json_str_from_file(path);
 	char *prioString;
 	cJSON *root, *styles, *active_style;
 	todo_error_t res;
-	styles_error_t *err_data = NULL;
 
 	if(!json_str) {
 		return TODO_ESTYLENOFILE;
