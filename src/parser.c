@@ -8,7 +8,7 @@
 #include "parser.h"
 #include "cbuf.h"
 
-//TODO: should be user errors defined in error.h instead
+//TODO: share errors or specific errors per module??
 #define PARSER_INVALID_COMMAND "invalid command %s"
 #define PARSER_SYNTAX_ERROR "syntax error, usage: %s"
 #define PARSER_ERR_EXC_MAX_LENGTH "input exceeded max length"

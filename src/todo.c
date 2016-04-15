@@ -78,7 +78,6 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 	FILE*	fp;	
 
 	if(!(fp = fopen(path, "r"))) {
-		//return 0; //TODO: need error codes etc
 		return TODO_ENOTXT;
 	}
 
@@ -177,7 +176,7 @@ int todolist_save(TodoList_t *tlist, const char *path) {
 }
 
 int todolist_load_styles(TodoList_t *tlist, const char *path) {
-	//TODO: if this fails, fall back to default style with err message
+	//TODO: if this fails, fall back to default style
 	return styles_from_json(tlist->style, path);
 }
 
