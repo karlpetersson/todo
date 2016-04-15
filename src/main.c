@@ -3,6 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <dirent.h>
+#include <sys/stat.h>
+
 
 #include "todo.h"
 #include "command.h"
@@ -16,19 +19,64 @@
 #define INPUT_TEXT_SIZE (1024)
 #define INPUT_KEY_SIZE (64)
 
-//TODO: should check for closest todo.txt instead and use that
-const char *todo_path = "./todo.txt";
 const char *styles_path = "/usr/local/etc/todoStyles.json";
 
 static int create_txt() {
 	//TODO: check for todo.txt file, create if not exists
-	if(access(todo_path, F_OK) != -1) {
+	/*if(access(todo_path, F_OK) != -1) {
 	    return TODO_EALRDYEXISTS;
 	} else {
 		FILE *fp = fopen(todo_path, "ab+");
 		fclose(fp);
 	    return TODO_OK;
+	}*/
+	return TODO_OK;
+}
+
+static int find_closest_txt(cbuf_t *res_path) {
+	DIR *dp;
+	int found_txt = 0;
+	struct dirent *entry;
+	struct stat statbuf;
+ 	char cwd[1024];
+ 	char old_cwd[1024];
+
+	if (!getcwd(old_cwd, sizeof(old_cwd))) {
+		printf("GETCWD FAILS");
+		return TODO_ENOTXT;
 	}
+   	
+	while(!(strcmp(cwd, "/") == 0) && !found_txt) {
+		if((dp = opendir(".")) == NULL) {
+			fprintf(stderr,"cannot open directory");
+			return TODO_ENOTXT;
+		}
+
+		if (!getcwd(cwd, sizeof(cwd))) {
+			printf("GETCWD FAILS");
+			return TODO_ENOTXT;
+		}
+
+		while((entry = readdir(dp)) != NULL) {
+			if(strcmp("todo.txt", entry->d_name) == 0) {
+				found_txt = 1;
+			}
+		}
+		
+		chdir("..");
+		closedir(dp);
+	}
+
+	if(!found_txt)
+		return TODO_ENOTXT;
+
+	cbuf_puts(res_path, cwd, strlen(cwd));
+	cbuf_puts(res_path, "/", 1);
+	cbuf_puts(res_path, "todo.txt", 10);
+
+	chdir(old_cwd);
+
+	return TODO_OK;
 }
 
 static void interactive_mode(TodoList_t *tlist) {
@@ -95,21 +143,25 @@ static void interactive_mode(TodoList_t *tlist) {
 }
 
 int main(int argc, char **argv) {
-	FILE *fp;
-	TodoList_t tl;
-	Command_t cmd;
+	cbuf_t *txt_path = cbuf_new(1024);
 	StrList_t line_list;
 	char *grep_output;
-	int i;
+	TodoList_t tl;
 	todo_error_t res;
-
+	Command_t cmd;
+	
 	todolist_create(&tl);
 
-	if((res = todolist_from_file(&tl, todo_path)) != TODO_OK) {
+	// find closest todo.txt, searching parent directories up to "/"
+	find_closest_txt(txt_path);
+
+	// parses todos from todo.txt file
+	if((res = todolist_from_file(&tl, cbuf_get(txt_path))) != TODO_OK) {
 		print_user_error(res);
 		exit(EXIT_FAILURE);
 	}
 
+	// loads the currently active style from todoStyles.json
 	if((res = todolist_load_styles(&tl, styles_path)) != TODO_OK) {
 		print_user_error(res);
 		exit(EXIT_FAILURE);
@@ -132,10 +184,12 @@ int main(int argc, char **argv) {
 			break;
 		case COMMAND_LIST:
 			todolist_print(&tl);
+			printf("%s\n", cbuf_get(txt_path));
 			break;
 		case COMMAND_ADD:
 			todolist_add(&tl, (char *)cmd.data, 0);
 			todolist_print(&tl);
+			printf("%s\n", cbuf_get(txt_path));
 			break;
 		case COMMAND_FINISH:
 			res = todolist_finish(&tl, (int *)cmd.data);
@@ -144,6 +198,7 @@ int main(int argc, char **argv) {
 				break;
 			}
 			todolist_print(&tl);
+			printf("%s\n", cbuf_get(txt_path));			
 			break;
 		case COMMAND_PRIO:
 			res = todolist_set_priority(&tl, &((int *)cmd.data)[0], NULL);
@@ -152,21 +207,23 @@ int main(int argc, char **argv) {
 				break;
 			}
 			todolist_print(&tl);
+			printf("%s\n", cbuf_get(txt_path));			
 			break;
 		case COMMAND_LOAD:
 			grep_output = parser_grep_files((char *)cmd.data, GREP_PATTERN);
 			strlist_new(&line_list);
 			parser_extract_todos(grep_output, &line_list, GREP_PATTERN);
 
-			for(i = 0; i < line_list.num_lines; i++) {
+			for(int i = 0; i < line_list.num_lines; i++) {
 				if(strlen(line_list.lines[i]) > 1) {
 					todolist_add(&tl, line_list.lines[i], 0);	
-					printf("(Todo added) %s\n", line_list.lines[i]);
 				}
 			}
 
 			free(grep_output);
 			strlist_free(&line_list);
+			todolist_print(&tl);
+			printf("%s\n", cbuf_get(txt_path));			
 			break;
 		case COMMAND_INTERACTIVE:
 			interactive_mode(&tl);
@@ -175,7 +232,7 @@ int main(int argc, char **argv) {
 			break;
 	}
 	
-	if((res = todolist_save(&tl, todo_path)) != TODO_OK) {
+	if((res = todolist_save(&tl, cbuf_get(txt_path))) != TODO_OK) {
 		print_user_error(res);
 		exit(EXIT_FAILURE);
 	}
