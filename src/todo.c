@@ -6,6 +6,7 @@
 
 #include "todo.h"
 #include "styles.h"
+#include "error.h"
 
 #define TODO_PRIO_CHAR 			'*'
 #define TODO_PRIO_STRING 		"* "
@@ -39,7 +40,7 @@ static void todo_render(void *data, int index, va_list args) {
 	Style_t*			style		= va_arg(args, Style_t*);
 
 	if(style != NULL) {
-		apply_style(result, todo->text, index, todo->prio, *selected, style);
+		styles_apply(result, todo->text, index, todo->prio, *selected, style);
 	} else {
 		printf("No render function specified!");
 	}
@@ -61,12 +62,13 @@ int todolist_length(TodoList_t *tlist) {
 	int count = 0;
 
 	list_for_each(tlist->todos, todo_count, &count);
-	
+
 	return count;
 }
 
 void todolist_create(TodoList_t *tlist) {
 	tlist->todos = list_new(sizeof(Todo_t) + (MAX_TODO_LENGTH * sizeof(char)) + sizeof(int), todo_free);
+	tlist->style = styles_init();
 }
 
 int todolist_from_file(TodoList_t *tlist, const char *path) {
@@ -76,7 +78,8 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 	FILE*	fp;	
 
 	if(!(fp = fopen(path, "r"))) {
-		return 0; //TODO: need error codes etc
+		//return 0; //TODO: need error codes etc
+		return TODO_ENOTXT;
 	}
 
 	//TODO: error prone, need to validate file
@@ -92,7 +95,7 @@ int todolist_from_file(TodoList_t *tlist, const char *path) {
 
 	fclose(fp);
 
-	return 1;
+	return TODO_OK;
 }
 
 //TODO: leaks memory mby
@@ -112,24 +115,31 @@ void todolist_add(TodoList_t *tlist, char *text, int prio) {
 	list_append(tlist->todos, &todo);
 }
 
-void todolist_finish(TodoList_t *tlist, int *linenum) {
+int todolist_finish(TodoList_t *tlist, int *linenum) {
 	int len = todolist_length(tlist);
 
-	//TODO: err message to user? t 
-	if(*linenum <= len && *linenum > 0) {
-		list_remove(tlist->todos, *linenum);
-	}
+	if(*linenum > len || *linenum <= 0) 
+		return TODO_ENOID;
+	
+	list_remove(tlist->todos, *linenum);
+
+	return TODO_OK;
 }
 
 // sets priority of todo and sorts the list based on priority
-void todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio) {
+int todolist_set_priority(TodoList_t *tlist, int *linenum, int *prio) {
 	Todo_t update;
 	Todo_t *todo = (Todo_t*)list_get(tlist->todos, *linenum);
 
-	todo->prio = *prio;
+	if(todo == NULL)
+		return TODO_ENOID;
+
+	todo->prio = !todo->prio;
 
 	list_set(tlist->todos, *linenum, todo);
 	list_sort(tlist->todos, todo_compare);
+
+	return TODO_OK;
 }
 
 int todolist_get_priority(TodoList_t *tlist, int *linenum) {
@@ -158,19 +168,20 @@ void todolist_print(TodoList_t *tlist) {
 int todolist_save(TodoList_t *tlist, const char *path) {
 	FILE *fp;
 	if(!(fp = fopen(path, "w"))) {
-		return 0;
+		return TODO_ENOTXT;
 	}
 
 	list_for_each(tlist->todos, todo_save, fp);
 
-	return 1;
+	return TODO_OK;
 }
 
 int todolist_load_styles(TodoList_t *tlist, const char *path) {
 	//TODO: if this fails, fall back to default style with err message
-	return styles_from_json(&tlist->style, path);
+	return styles_from_json(tlist->style, path);
 }
 
 void todolist_destroy(TodoList_t *tlist) {
 	list_free(tlist->todos);
+	styles_free(tlist->style);
 }
