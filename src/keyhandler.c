@@ -3,6 +3,7 @@
 
 Key_t key_from_raw_input(const char* buf) {
 	int p[3] = {*buf, *(buf+1), *(buf+2)};
+	//printf("%d %d %d", p[0], p[1], p[2]);
 	Key_t k;
 
 	if(p[0] == 27) {
@@ -25,6 +26,8 @@ Key_t key_from_raw_input(const char* buf) {
 		k = KEY_A;
 	} else if(p[0] == 100 && p[1] == 0) {
 		k = KEY_D;
+	} else if(p[0] == 102 && p[1] == 0) {
+		k = KEY_F;
 	} else if(p[0] == 112 && p[1] == 0) {
 		k = KEY_P;
 	} else if(p[0] == 113 && p[1] == 0) {

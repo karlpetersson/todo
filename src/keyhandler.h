@@ -9,6 +9,7 @@ typedef enum {
 	KEY_RIGHT,
 	KEY_A,
 	KEY_D,
+	KEY_F,
 	KEY_P,
 	KEY_ESC,
 	KEY_Q,
