@@ -2,38 +2,43 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdarg.h>
+
 #include "command.h"
 #include "parser.h"
+#include "cbuf.h"
 
-#define PARSER_ERR "Parser: "
-#define PARSER_ERR_NUM_ARGS "Parser: Too few arguments to command "
-#define PARSER_ERR_NOT_NUM "Parser: Command argument needs to be a number "
-#define PARSER_ERR_EXC_MAX_LENGTH "Parser: Input exceeded max length "
+//TODO: should be user errors defined in error.h instead
+#define PARSER_INVALID_COMMAND "invalid command %s"
+#define PARSER_SYNTAX_ERROR "syntax error, usage: %s"
+#define PARSER_ERR_EXC_MAX_LENGTH "input exceeded max length"
 #define READ_END 0
 #define WRITE_END 1
 #define BASE10 10
 
 static const int MAX_LINE_LENGTH = 1024;
-static const int MAX_RESULT_LENGTH = 2048;
-static const int MAX_FILENAME_LENGTH = MAX_LINE_LENGTH;
 static const int MAX_GREP_OUTPUT_LENGTH = 65536;
-static const int MAX_GREP_INPUT_LENGTH = 65536 + (1024 * 4);
-static const int MAX_GREP_ARG_LENGTH = 256;
 static const int MAX_ERROR_MSG_LENGTH = 512;
 
-static Command_t parser_error(Command_t *cmd, char const *msg) {
-	cmd_new(cmd, sizeof(char), MAX_ERROR_MSG_LENGTH);
+static Command_t parser_error(Command_t *cmd, char const *msg, ...) {
+	va_list args;
+
+	cmd_new(cmd, MAX_ERROR_MSG_LENGTH);
 	cmd->type = COMMAND_INVALID;
-	strncat(cmd->data, msg, MAX_ERROR_MSG_LENGTH);
+
+	va_start(args, msg);
+	vsnprintf(cmd->data, MAX_ERROR_MSG_LENGTH, msg, args);
+	va_end(args);
+
 	return *cmd;
 }
 
 void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 	const char * 	curLine = str;
 	size_t 			pbytes = strlen(pattern);
+	cbuf_t 			*result = cbuf_new(MAX_LINE_LENGTH);
 	char 			filename[MAX_LINE_LENGTH] = {'\0'};
 	char 			todotext[MAX_LINE_LENGTH] = {'\0'};
-	char 			result[MAX_RESULT_LENGTH] = {'\0'};
 	char 			*res_ptr, *line_pos, *last_slash_pos;
 
 	while(curLine) {
@@ -84,19 +89,19 @@ void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 					line_pos += pbytes;
 					pattern_found = 1;
 				}
-				*line_pos++;
+				(void)(*line_pos++); // (void) to remove compiler warning
 			}
 
-			memset(result, 0, MAX_RESULT_LENGTH);
+			cbuf_puts(result, filename, strlen(filename));
+			cbuf_append_space(result);
+			cbuf_puts(result, todotext, strlen(todotext));
 
-			strncat(result, filename, MAX_RESULT_LENGTH);
-			strncat(result, " ", MAX_RESULT_LENGTH);
-			strncat(result, todotext, MAX_RESULT_LENGTH);
-
-			strlist_add(sl, result, MAX_RESULT_LENGTH);
+			strlist_add(sl, cbuf_get(result), result->size);
 
 			memset(todotext, 0, MAX_LINE_LENGTH);
 			memset(filename, 0, MAX_LINE_LENGTH);
+
+			cbuf_clear(result);
 
 			free(tempStr);
 		} else {
@@ -104,21 +109,26 @@ void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 		}
 		curLine = nextLine ? (nextLine+1) : NULL;
 	}
+
+	cbuf_free(result);
+
 }
 
 char *parser_grep_files(char *files, const char *search_pattern) {
+	const char *grep_cmd = "grep -n ";
+	const char *grep_excl = "--exclude src/main.c";
+	cbuf_t 	*grep_input = cbuf_new(MAX_LINE_LENGTH);
+	char 	*output = malloc(MAX_GREP_OUTPUT_LENGTH);
 	int 	status;
   	int 	fd[2];
-	char 	grepstr[MAX_GREP_INPUT_LENGTH] = "grep -n ";
-	char 	*output;
 	pid_t 	pid;
 
-	output = malloc(MAX_GREP_OUTPUT_LENGTH);
-	strncat(grepstr, search_pattern, MAX_GREP_ARG_LENGTH);
-	strncat(grepstr, " ", 1);
-	strncat(grepstr, files, MAX_GREP_OUTPUT_LENGTH);
-	strncat(grepstr, " ", 1);
-	strncat(grepstr, "--exclude src/main.c", MAX_GREP_ARG_LENGTH);
+	cbuf_puts(grep_input, grep_cmd, strlen(grep_cmd)); 
+	cbuf_puts(grep_input, search_pattern, strlen(search_pattern));
+	cbuf_append_space(grep_input);
+	cbuf_puts(grep_input, files, strlen(files));
+	cbuf_append_space(grep_input);
+	cbuf_puts(grep_input, grep_excl, strlen(grep_excl));
 
 	if(pipe(fd)==-1)
     	fprintf(stderr, "fd FAILED");
@@ -130,7 +140,7 @@ char *parser_grep_files(char *files, const char *search_pattern) {
 		dup2(fd[WRITE_END], STDOUT_FILENO);
 		close(fd[READ_END]);
 		close(fd[WRITE_END]);
-   		execl("/bin/sh", "sh", "-c", grepstr, NULL);
+   		execl("/bin/sh", "sh", "-c", cbuf_get(grep_input), NULL);
 		fprintf(stderr, "execl failed, could not execute /bin/sh -c grep");
 		return NULL;
 	} else {
@@ -139,6 +149,7 @@ char *parser_grep_files(char *files, const char *search_pattern) {
 		close(fd[WRITE_END]);
 		nbytes = read(fd[READ_END], output, MAX_GREP_OUTPUT_LENGTH);
 		wait(&status);
+		cbuf_free(grep_input);
 
 		return output;
 	}
@@ -150,46 +161,49 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 
 	/* LIST */
 	if (argc <= 1) {
-		cmd_new(&cmd, 0, 0);
+		cmd_new(&cmd, 0);
 		cmd.type = COMMAND_LIST;
 		cmd.data = NULL;
 	} 
 	/* ADD */
 	else if(strcmp(argv[1], "add") == 0 || strcmp(argv[1], "a") == 0) {
-		int num_bytes = 0;
+		cbuf_t *todo_text = cbuf_new(MAX_LINE_LENGTH);
 
-		if(argc <= 2) 
-			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(add)");
-		
-		for(int i = 2; i < argc; i++) {
-			num_bytes += strlen(argv[i]);
+		if(argc <= 2) {
+			cbuf_free(todo_text);
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo a <text>");
 		}
 
-		if(num_bytes >= MAX_LINE_LENGTH - 1)
-			return parser_error(&cmd, PARSER_ERR_EXC_MAX_LENGTH "(add)");
+		for(int i = 2; i < argc; i++) {
+			cbuf_puts(todo_text, argv[i], strlen(argv[i]));
+			if(i != (argc - 1 )) cbuf_append_space(todo_text);
 
-		cmd_new(&cmd, sizeof(char), MAX_LINE_LENGTH);	
+			if(todo_text->size > MAX_LINE_LENGTH) {
+				cbuf_free(todo_text);
+				return parser_error(&cmd, PARSER_ERR_EXC_MAX_LENGTH "(add)");
+			}
+		}
+
+		cmd_new(&cmd, todo_text->size);	
+		strncat(cmd.data, cbuf_get(todo_text), todo_text->size);
 		cmd.type = COMMAND_ADD;
 
-		for(int i = 2; i < argc; i++) {
-			strncat(cmd.data, argv[i], MAX_LINE_LENGTH - 2);
-			if(i != (argc - 1)) strncat(cmd.data, " ", 1);
-		} 
+		cbuf_free(todo_text);
 
 	/* DO */
-	} else if(strcmp(argv[1], "do") == 0 || strcmp(argv[1], "d") == 0) {
+	} else if(strcmp(argv[1], "finish") == 0 || strcmp(argv[1], "f") == 0) {
 		int p;
 		char *end;
 
 		if(argc <= 2) 
-			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(do)");
-		
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo f <num>");
+
 		p = strtol(argv[2], &end, BASE10);
 
 		if(*end) 
-			return parser_error(&cmd, PARSER_ERR_NOT_NUM "(do)");
-	
-		cmd_new(&cmd, sizeof(int), 1);
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo f <num>");
+
+		cmd_new(&cmd, sizeof(int));
 		cmd.type = COMMAND_FINISH;
 		memcpy(cmd.data, &p, sizeof(int));
 
@@ -198,36 +212,41 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 		int p[2];
 		char *end1, *end2;
 
-		if(argc <= 3)
-			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(prio)");
+		if(argc <= 2)
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo p <num>");
 		
 		p[0] = strtol(argv[2], &end1, BASE10);
-		p[1] = strtol(argv[3], &end2, BASE10);
+		//p[1] = strtol(argv[3], &end2, BASE10); //prio level, not used atm
 
-		if(*end1 || *end2)
-			return parser_error(&cmd, PARSER_ERR_NOT_NUM "(prio)");
+		if(*end1) // || *end2)
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo p <num>");
 	
-		cmd_new(&cmd, sizeof(int), 2);
+		cmd_new(&cmd, sizeof(int));
 		cmd.type = COMMAND_PRIO;
-		memcpy(cmd.data, &p, sizeof(int) * 2);
+		memcpy(cmd.data, &p, sizeof(int));
 		
 	/* LOAD */
 	} else if(strcmp(argv[1], "load") == 0 || strcmp(argv[1], "l") == 0) {
+		cbuf_t *filenames = cbuf_new(MAX_LINE_LENGTH);
+
 		if(argc < 3)
-			return parser_error(&cmd, PARSER_ERR_NUM_ARGS "(load)");
+			return parser_error(&cmd, PARSER_SYNTAX_ERROR, "todo l <files>");
 		
-		cmd_new(&cmd, sizeof(char), MAX_FILENAME_LENGTH * (argc - 2));
-		cmd.type = COMMAND_LOAD;
 		for(int i = 2; i < argc; i++) {
-			strncat(cmd.data, argv[i], MAX_FILENAME_LENGTH);
-			strncat(cmd.data, " ", 1);
+			cbuf_puts(filenames, argv[i], strlen(argv[i]));
+			cbuf_append_space(filenames);
 		}
+
+		cmd_new(&cmd, filenames->size);
+		cmd.type = COMMAND_LOAD;
+		strncat(cmd.data, cbuf_get(filenames), filenames->size);
+		cbuf_free(filenames);
 		
 	} else if(strcmp(argv[1], "i") == 0) {
-		cmd_new(&cmd, 0, 0);
+		cmd_new(&cmd, 0);
 		cmd.type = COMMAND_INTERACTIVE;
 	} else {
-		parser_error(&cmd, PARSER_ERR "Unknown command");
+		parser_error(&cmd, PARSER_INVALID_COMMAND, argv[1]);
 	}
 
 	return cmd;
