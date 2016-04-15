@@ -1,32 +1,37 @@
 #ifndef COLORS_H_
 #define COLORS_H_
 
+typedef enum {
+	BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
+	BOLD = 0, UNDERLINE = 1, IMAGE = 2
+} color_t;
+
 static const char *co_table[8] = {
-	/*0 = BLACK*/  	"\x1B[30",
-	/*1 = RED*/  	"\x1B[31m",
-	/*2 = GREEN*/  	"\x1B[32m",
-	/*3 = YELLOW*/  "\x1B[33m",
-	/*4 = BLUE*/  	"\x1B[34m",
-	/*5 = MAGENTA*/ "\x1B[35m",
-	/*6 = CYAN*/  	"\x1B[36m",
-	/*7 = WHITE*/  	"\x1B[37m"
+	[BLACK] 	= "\x1B[30",
+	[RED]		= "\x1B[31m",
+	[GREEN]		= "\x1B[32m",
+	[YELLOW]	= "\x1B[33m",
+	[BLUE]		= "\x1B[34m",
+	[MAGENTA]	= "\x1B[35m",
+	[CYAN]		= "\x1B[36m",
+	[WHITE]		= "\x1B[37m"
 };
 
 static const char *bg_table[8] = {
-	/*0 = GRAY*/ 	"\x1B[40m",
-	/*1 = RED*/  	"\x1B[41m",
-	/*2 = GREEN*/  	"\x1B[42m",
-	/*3 = YELLOW*/  "\x1B[44m",
-	/*4 = BLUE*/  	"\x1B[44m",
-	/*5 = MAGENTA*/ "\x1B[45m",
-	/*6 = CYAN*/  	"\x1B[46m",
-	/*7 = WHITE*/  	"\x1B[47m"
+	[BLACK] 	= "\x1B[40",
+	[RED]		= "\x1B[41m",
+	[GREEN]		= "\x1B[42m",
+	[YELLOW]	= "\x1B[43m",
+	[BLUE]		= "\x1B[44m",
+	[MAGENTA]	= "\x1B[45m",
+	[CYAN]		= "\x1B[46m",
+	[WHITE]		= "\x1B[47m"
 };
 
 static const char *st_table[3] = {
-	/*0 = BOLD*/ 		"\x1b[1m",
-	/*1 = UNDERLINE*/ 	"\x1b[4m",
-	/*2 = IMAGE*/ 		"\x1b[7m"
+	[BOLD]		= "\x1b[1m",
+	[UNDERLINE] = "\x1b[4m",
+	[IMAGE]		= "\x1b[7m"
 };
 
 static inline const char *co_from_id(int id) {
