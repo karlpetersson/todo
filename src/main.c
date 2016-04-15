@@ -10,6 +10,7 @@
 #include "keyhandler.h"
 #include "terminal.h"
 #include "concat.h"
+#include "error.h"
 
 #define GREP_PATTERN "TODO:"
 #define INPUT_TEXT_SIZE (1024)
@@ -31,7 +32,7 @@ static void interactive_mode(TodoList_t *tlist) {
 
 		memset(input_key_buf, 0, INPUT_KEY_SIZE);
 		memset(input_text_buf, 0, INPUT_TEXT_SIZE);
-		
+
 		todolist_render(tlist, render_buf, cursor_pos);
 
 		term_render(cbuf_get(render_buf), render_buf->size);
@@ -55,7 +56,7 @@ static void interactive_mode(TodoList_t *tlist) {
 				term_get_text_input(input_text_buf, INPUT_TEXT_SIZE);
 				todolist_add(tlist, input_text_buf, 0);
 				break;
-			case KEY_D:
+			case KEY_F:
 				if(cursor_pos)
 					todolist_finish(tlist, &cursor_pos);
 				if(cursor_pos > todolist_length(tlist)) cursor_pos--;
@@ -88,16 +89,17 @@ int main(int argc, char **argv) {
 	StrList_t line_list;
 	char *grep_output;
 	int i;
+	todo_error_t res;
 
 	todolist_create(&tl);
 
-	if(!todolist_from_file(&tl, todo_path)) {
-		fprintf(stderr, "Can't find todo.txt, maybe you don't have one in the current folder?\n");
+	if((res = todolist_from_file(&tl, todo_path)) != TODO_OK) {
+		print_user_error(res);
 		exit(EXIT_FAILURE);
 	}
 
-	if(!todolist_load_styles(&tl, styles_path)) {
-		fprintf(stderr, "Error parsing styles-file (todoStyles.json)\n");
+	if((res = todolist_load_styles(&tl, styles_path)) != TODO_OK) {
+		print_user_error(res);
 		exit(EXIT_FAILURE);
 	}
 
@@ -106,22 +108,29 @@ int main(int argc, char **argv) {
 	
 	switch(cmd.type) {
 		case COMMAND_INVALID:
-			printf("%s\n", cmd.data);
+			print_user_error(TODO_EINVALIDCMD, cmd.data);
 			break;
 		case COMMAND_LIST:
 			todolist_print(&tl);
 			break;
 		case COMMAND_ADD:
 			todolist_add(&tl, (char *)cmd.data, 0);
-			//printf("(Todo added) %s", (char *)cmd.data);
 			todolist_print(&tl);
 			break;
 		case COMMAND_FINISH:
-			todolist_finish(&tl, (int *)cmd.data);
+			res = todolist_finish(&tl, (int *)cmd.data);
+			if(res != TODO_OK) {
+				print_user_error(res, *((int *)cmd.data)); 
+				break;
+			}
 			todolist_print(&tl);
 			break;
 		case COMMAND_PRIO:
-			todolist_set_priority(&tl, &((int *)cmd.data)[0], &((int *)cmd.data)[1]);
+			res = todolist_set_priority(&tl, &((int *)cmd.data)[0], NULL);
+			if(res != TODO_OK) {
+				print_user_error(res, ((int *)cmd.data)[0]);
+				break;
+			}
 			todolist_print(&tl);
 			break;
 		case COMMAND_LOAD:
@@ -146,8 +155,8 @@ int main(int argc, char **argv) {
 			break;
 	}
 	
-	if(!todolist_save(&tl, todo_path)) {
-		fprintf(stderr, "sry cant open file\n");
+	if((res = todolist_save(&tl, todo_path)) != TODO_OK) {
+		print_user_error(res);
 		exit(EXIT_FAILURE);
 	}
 
