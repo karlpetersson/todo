@@ -19,7 +19,7 @@ typedef struct {
 	void *data;
 } Command_t; 
 
-void cmd_new(Command_t *cmd, size_t data_size, int length);
+void cmd_new(Command_t *cmd, size_t data_size);
 void cmd_free(Command_t *cmd);
 
 #endif
