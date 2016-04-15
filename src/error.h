@@ -11,6 +11,7 @@ typedef enum {
 	TODO_ENOMEM,
 	TODO_ENOID,
 	TODO_ENOTXT,
+	TODO_EALRDYEXISTS,
 	TODO_EINVALIDCMD,
 	TODO_ESTYLE,
 	TODO_ESTYLENOFILE,
@@ -26,9 +27,10 @@ typedef enum {
 } todo_error_t;
 
 static const char *error_msg_table[MAX_ERR_LEN] = {
+	[TODO_ENOMEM]		=	"todo: Malloc failed",
 	[TODO_ENOID] 		=	"todo: ID %d not found\n",
-	[TODO_ENOMEM]		=	"todo: Malloc failed\n",
 	[TODO_ENOTXT] 		=	"todo: Can't find todo.txt\n",
+	[TODO_EALRDYEXISTS] =	"todo: Todo.txt already exists in current folder\n",
 	[TODO_EINVALIDCMD]	=	"todo: %s\n", //err str supplied by parser
 	[TODO_ESTYLE]		=	"todo: Error parsing styles\n",
 	[TODO_ESTYLENOFILE] =	"todo: Can't open file todoStyles.json\n",

@@ -245,6 +245,9 @@ Command_t parser_parse_cmd(int argc, char **argv) {
 	} else if(strcmp(argv[1], "i") == 0) {
 		cmd_new(&cmd, 0);
 		cmd.type = COMMAND_INTERACTIVE;
+	} else if(strcmp(argv[1], "n") == 0 || strcmp(argv[1], "new") == 0) {
+		cmd_new(&cmd, 0);
+		cmd.type = COMMAND_INIT;
 	} else {
 		parser_error(&cmd, PARSER_INVALID_COMMAND, argv[1]);
 	}

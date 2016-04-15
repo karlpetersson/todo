@@ -1,5 +1,3 @@
-* terminal.c:75: add support for load in interactive mode, should reload all src-todos?
-* todo.c:101: leaks memory mby
-* todo.c:85: error prone, need to validate file
-todo.c:180: if this fails, fall back to default style with err message
-todo.h:9: expand to contain line number etc for source-file todos
+* asodpkfa
+fix that fucking lamp
+yo you need to buy shit

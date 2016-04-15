@@ -16,8 +16,20 @@
 #define INPUT_TEXT_SIZE (1024)
 #define INPUT_KEY_SIZE (64)
 
+//TODO: should check for closest todo.txt instead and use that
 const char *todo_path = "./todo.txt";
 const char *styles_path = "/usr/local/etc/todoStyles.json";
+
+static int create_txt() {
+	//TODO: check for todo.txt file, create if not exists
+	if(access(todo_path, F_OK) != -1) {
+	    return TODO_EALRDYEXISTS;
+	} else {
+		FILE *fp = fopen(todo_path, "ab+");
+		fclose(fp);
+	    return TODO_OK;
+	}
+}
 
 static void interactive_mode(TodoList_t *tlist) {
 	Key_t 	pressed_key = 0;
@@ -109,6 +121,14 @@ int main(int argc, char **argv) {
 	switch(cmd.type) {
 		case COMMAND_INVALID:
 			print_user_error(TODO_EINVALIDCMD, cmd.data);
+			break;
+		case COMMAND_INIT:
+			res = create_txt();
+			if(res != TODO_OK) {
+				print_user_error(res);
+				break;
+			}
+			printf("Created todo.txt\n");
 			break;
 		case COMMAND_LIST:
 			todolist_print(&tl);
