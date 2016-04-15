@@ -13,28 +13,35 @@ cbuf_t* cbuf_new(size_t chunk) {
 	return cbuf;
 }
 
-void cbuf_puts(cbuf_t *cbuf, char *str, size_t bytes) {
-	int result; 
-	
-	if((cbuf->size + bytes) > cbuf->cap) {
+int cbuf_puts(cbuf_t *cbuf, const char *str, size_t bytes) {
+	int result = CBUF_OK;
+
+	while((cbuf->size + bytes) > cbuf->cap) {
 		result = cbuf_grow(cbuf);
 	}
 
-	if(result > 0){}; //OK handle
+	if(result != CBUF_OK) 
+		return result;
 
 	memcpy(cbuf->data + cbuf->size, str, bytes);
 	cbuf->size += bytes;
+
+	return CBUF_OK;
+}
+
+int cbuf_append_space(cbuf_t *cbuf) {
+	return cbuf_puts(cbuf, " ", 1);
 }
 
 int cbuf_grow(cbuf_t *cbuf) {
 	cbuf->data = realloc(cbuf->data, cbuf->chnk);
 
 	if(cbuf->data == NULL)
-		return 0; //ERROR
+		return CBUF_NOMEM;
 
 	cbuf->cap += cbuf->chnk;
 
-	return 1;
+	return CBUF_OK;
 }
 
 char *cbuf_get(cbuf_t *cbuf) {
@@ -52,6 +59,9 @@ void cbuf_clear(cbuf_t *cbuf) {
 }
 
 void cbuf_free(cbuf_t *cbuf) {
-	free(cbuf->data);
-	free(cbuf);
+	if(cbuf) {
+		if(cbuf->data)
+			free(cbuf->data);	
+		free(cbuf);
+	}
 }
