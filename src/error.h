@@ -8,36 +8,38 @@
 
 typedef enum {
 	TODO_OK,
+	TODO_ENOMEM,
 	TODO_ENOID,
 	TODO_ENOTXT,
 	TODO_EINVALIDCMD,
 	TODO_ESTYLE,
-	TODO_ESTL_NOFILE,
-	TODO_ESTL_NOACTV,
-	TODO_ESTL_PARSE,
-	TODO_ESTL_CRNUM,
-	TODO_ESTL_BGNUM,
-	TODO_ESTL_SPNUM,
-	TODO_ESTL_WFRMT,
-	TODO_ESTL_VMSNG,
-	TODO_ESTL_WORDR,
+	TODO_ESTYLENOFILE,
+	TODO_ESTYLENOACTV,
+	TODO_ESTYLEPARSE,
+	TODO_ESTYLECRNUM,
+	TODO_ESTYLEBGNUM,
+	TODO_ESTYLESPNUM,
+	TODO_ESTYLEWFRMT,
+	TODO_ESTYLEVMSNG,
+	TODO_ESTYLEWORDR,
 	TODO_NUMERR
 } todo_error_t;
 
 static const char *error_msg_table[MAX_ERR_LEN] = {
 	[TODO_ENOID] 		=	"todo: ID %d not found\n",
+	[TODO_ENOMEM]		=	"todo: Malloc failed\n",
 	[TODO_ENOTXT] 		=	"todo: Can't find todo.txt\n",
 	[TODO_EINVALIDCMD]	=	"todo: %s\n", //err str supplied by parser
-	[TODO_ESTYLE]		=	"todo: error parsing styles\n",
-	[TODO_ESTL_NOFILE] 	=	"todo: Can't open file todoStyles.json\n",
-	[TODO_ESTL_NOACTV] 	=	"styles: active style '%s' is not defined in the array of styles\n",
-	[TODO_ESTL_PARSE] 	=	"todo: error parsing styles\n",
-	[TODO_ESTL_CRNUM] 	=	"style '%s': Color value out of bounds (0-7 allowed)\n",
-	[TODO_ESTL_BGNUM] 	=	"style '%s': Background color value out of bounds (0-7 allowed)\n",
-	[TODO_ESTL_SPNUM] 	=	"style '%s': Special value out of bounds (0-2 allowed)\n",
-	[TODO_ESTL_WFRMT] 	=	"style '%s': Style contains more than one of each $(N) $(P) and $(T)\n",
-	[TODO_ESTL_VMSNG] 	=	"style '%s': One of the variables $(N) $(P) $(T) is missing\n",
-	[TODO_ESTL_WORDR] 	=	"style '%s': Variables for line number, priority and text is in wrong order (correct order is: $(N) $(P) $(T))"
+	[TODO_ESTYLE]		=	"todo: Error parsing styles\n",
+	[TODO_ESTYLENOFILE] =	"todo: Can't open file todoStyles.json\n",
+	[TODO_ESTYLENOACTV] =	"todo: Active style '%s' is not defined\n",
+	[TODO_ESTYLEPARSE] 	=	"todo: Error parsing styles\n",
+	[TODO_ESTYLECRNUM] 	=	"todo: style '%s': Color value out of bounds (0-7 allowed)\n",
+	[TODO_ESTYLEBGNUM] 	=	"todo: style '%s': Background color value out of bounds (0-7 allowed)\n",
+	[TODO_ESTYLESPNUM] 	=	"todo: style '%s': Special value out of bounds (0-2 allowed)\n",
+	[TODO_ESTYLEWFRMT] 	=	"todo: style '%s': Style contains more than one of each $(N) $(P) and $(T)\n",
+	[TODO_ESTYLEVMSNG] 	=	"todo: style '%s': One of the variables $(N) $(P) $(T) is missing\n",
+	[TODO_ESTYLEWORDR] 	=	"todo: style '%s': Variables $(N) $(P) $(T) is in wrong order\n"
 };
 
 static inline void print_user_error(todo_error_t errnum, ...) {

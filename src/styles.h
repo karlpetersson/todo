@@ -5,12 +5,16 @@
 
 #define STYLE_LINE_LENGTH (2048)
 
-typedef struct Style_t {
+typedef struct _Style_t {
 	cbuf_t *text_norm;
 	cbuf_t *text_sel;
 	cbuf_t *prio_str;
 } Style_t;
 
+typedef struct {
+	char *data;
+	char *line;
+} style_error_t;
 
 Style_t *styles_init();
 void styles_free(Style_t *style);
