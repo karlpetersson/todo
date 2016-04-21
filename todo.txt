@@ -1,8 +1,0 @@
-* asdfpaoksdfpoaksdf
-* sdfkapasdkf aopsdkf
-* terminal.c:75: add support for load in interactive mode, should reload all src-todos?
-asdfpokasdpofkasdf
-parser.c:11: share errors or specific errors per module??
-todo.c:84: error prone, need to validate file
-todo.c:100: leaks memory mby
-todo.c:179: if this fails, fall back to default style

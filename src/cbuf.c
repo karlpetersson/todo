@@ -39,6 +39,7 @@ int cbuf_grow(cbuf_t *cbuf) {
 	if(cbuf->data == NULL)
 		return CBUF_NOMEM;
 
+	//memset(cbuf->data + cbuf->chnk, 0, cbuf->chnk);
 	cbuf->cap += cbuf->chnk;
 
 	return CBUF_OK;
@@ -51,7 +52,8 @@ char *cbuf_get(cbuf_t *cbuf) {
 void cbuf_clear(cbuf_t *cbuf) {
 	assert(cbuf != NULL);
 
-	free(cbuf->data);
+	if (cbuf->data)
+		free(cbuf->data);
 
 	cbuf->data = NULL;
 	cbuf->size = 0;

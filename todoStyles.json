@@ -1,5 +1,5 @@
 {
-	"activeStyle": "magenta",
+	"activeStyle": "red",
 	"styles": {
 		"clean": {
 			"line": "$(C7)$(N)  $(R)$(C1)$(P)$(R)$(T)",

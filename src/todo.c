@@ -67,7 +67,7 @@ int todolist_length(TodoList_t *tlist) {
 }
 
 void todolist_create(TodoList_t *tlist) {
-	tlist->todos = list_new(sizeof(Todo_t) + (MAX_TODO_LENGTH * sizeof(char)) + sizeof(int), todo_free);
+	tlist->todos = list_new(sizeof(Todo_t) + MAX_TODO_LENGTH + sizeof(int), todo_free);
 	tlist->style = styles_init();
 }
 

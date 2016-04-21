@@ -41,6 +41,8 @@ static int __parse_style(char *style_raw, cbuf_t *result) {
 
 	ptr = style_raw;
 
+	//cbuf_puts(result, ST_RESET, strlen(ST_RESET));
+
 	while(*ptr) {
 		if(*ptr == '$' && *(ptr + 1) == '(') {
 			ptr += 2; //skip '$' and '('
@@ -111,6 +113,7 @@ Style_t *styles_init() {
 void styles_free(Style_t *style) {
 	cbuf_free(style->text_norm);
 	cbuf_free(style->text_sel);
+	cbuf_free(style->prio_str);
 	free(style);
 }
 
@@ -119,8 +122,12 @@ void styles_apply(cbuf_t *result, const char *text, int linenum, int prio, int s
 
 	sprintf(line, ((selected == linenum) ? cbuf_get(style->text_sel) : cbuf_get(style->text_norm)),
 		linenum, (prio ? cbuf_get(style->prio_str) : ""), text);
-	
+
 	cbuf_puts(result, line, strlen(line));
+
+	cbuf_puts(result, ST_RESET, strlen(ST_RESET));
+	//printf("size: %lu \n", result->size);
+	//printf("val: %s\n", cbuf_get(result));
 }
 
 int styles_from_json(Style_t *style, const char *path) {

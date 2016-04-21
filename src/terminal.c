@@ -79,6 +79,6 @@ void term_get_text_input(char *buf, size_t size) {
 }
 
 void term_render(char *buf, size_t size) {
-	clrscr();    
+	clrscr();
 	write(STDOUT_FILENO, buf, size);
 }

@@ -16,7 +16,7 @@
 #include "error.h"
 
 #define GREP_PATTERN "TODO:"
-#define INPUT_TEXT_SIZE (1024)
+#define INPUT_TEXT_SIZE (4096)
 #define INPUT_KEY_SIZE (64)
 
 const char *styles_path = "/usr/local/etc/todoStyles.json";
@@ -70,7 +70,8 @@ static int find_closest_txt(cbuf_t *res_path) {
 	if(!found_txt)
 		return TODO_ENOTXT;
 
-	cbuf_puts(res_path, cwd, strlen(cwd));
+	if(cbuf_puts(res_path, cwd, strlen(cwd)) != CBUF_OK)
+		return TODO_ENOMEM;
 	cbuf_puts(res_path, "/", 1);
 	cbuf_puts(res_path, "todo.txt", 10);
 
@@ -180,7 +181,7 @@ int main(int argc, char **argv) {
 				print_user_error(res);
 				break;
 			}
-			printf("Created todo.txt\n");
+			//printf("Created todo.txt\n");
 			break;
 		case COMMAND_LIST:
 			todolist_print(&tl);
@@ -237,6 +238,7 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	cbuf_free(txt_path);
 	todolist_destroy(&tl);
 	cmd_free(&cmd);
 }
