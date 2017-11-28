@@ -1,0 +1,2 @@
+Check if theres an api for notifications (sholud be service)
+Create mock test with addFakeDevice API

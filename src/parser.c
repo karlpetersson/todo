@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "command.h"
 #include "parser.h"
@@ -37,8 +39,8 @@ void parser_extract_todos(char *str, StrList_t *sl, const char *pattern) {
 	const char * 	curLine = str;
 	size_t 			pbytes = strlen(pattern);
 	cbuf_t 			*result = cbuf_new(MAX_LINE_LENGTH);
-	char 			filename[MAX_LINE_LENGTH] = {'\0'};
-	char 			todotext[MAX_LINE_LENGTH] = {'\0'};
+	char 			filename[MAX_LINE_LENGTH];
+	char 			todotext[MAX_LINE_LENGTH];
 	char 			*res_ptr, *line_pos, *last_slash_pos;
 
 	while(curLine) {

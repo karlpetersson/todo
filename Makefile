@@ -1,16 +1,18 @@
 OUT = todo
-FLAGS = -Wall
+FLAGS = -std=c99
+DEPS = $(wildcard src/*.h)
 INC = src/
 SRC = $(wildcard src/*.c)
 CC = gcc
 OBJ = $(SRC:c=o)
 
-$(OUT): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) -o $(OUT) -I$(INC)
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(FLAGS)
 
-all: $(OUT) -lm
+all: $(OBJ)
+	$(CC) $(OBJ) -o $(OUT) -I$(INC) -lm
 
-clean: 
+clean:
 	rm -rf src/*.o todo
 
 install:
