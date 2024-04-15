@@ -1,5 +1,9 @@
 ## TODO
 
+> [!NOTE]  
+> Test
+
+
 ### INSTALLATION
 
 Download the repo, and then `make` followed by `make install` in the root folder. This will install todo in `/usr/local/bin`, and copy `todoStyles.json` to `/usr/local/etc`.
